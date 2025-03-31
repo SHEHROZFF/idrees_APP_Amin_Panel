@@ -188,7 +188,7 @@ const Users = () => {
                     <td className="py-4 px-6 text-sm capitalize text-gray-800 dark:text-gray-200">
                       {user.role}
                     </td>
-                    <td className="py-4 px-6 text-sm text-gray-800 dark:text-gray-200 flex items-center">
+                    {user.role !== 'admin' && <td className="py-4 px-6 text-sm text-gray-800 dark:text-gray-200 flex items-center">
                       <button
                         onClick={() => handleEdit(user)}
                         className="text-blue-500 hover:text-blue-700 mr-4 flex items-center"
@@ -205,7 +205,7 @@ const Users = () => {
                         <FaTrash className="mr-1" />
                         Delete
                       </button>
-                    </td>
+                    </td>}
                   </tr>
                 ))}
                 {currentUsers.length === 0 && (
