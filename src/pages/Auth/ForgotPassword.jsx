@@ -47,9 +47,9 @@ const ForgotPassword = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 px-4">
       <div className="bg-white dark:bg-gray-800 p-10 rounded-lg shadow-lg w-full max-w-md">
         {/* Logo */}
-        <div className="flex justify-center mb-6">
+        {/* <div className="flex justify-center mb-6">
           <img src={logo} alt="Logo" className="h-16 w-16 object-contain" />
-        </div>
+        </div> */}
 
         {/* Form Title */}
         <h2 className="text-3xl font-bold mb-6 text-center text-gray-800 dark:text-white">
