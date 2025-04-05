@@ -7,7 +7,7 @@ import {
   addUser,
   updateUser,
   deleteUser,
-} from '../../app2/redux/slices/usersSlice'; // Redux actions
+} from '../redux/slices/usersSlice'; // Redux actions
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import {

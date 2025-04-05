@@ -6,6 +6,8 @@ import axiosInstance from '../../utils/axiosInstance';
 export const fetchUsers = createAsyncThunk('users/fetchUsers', async (_, thunkAPI) => {
   try {
     const response = await axiosInstance.get('api/users');
+    console.log(response.data);
+    
     return response.data; // { success: true, count: X, data: [/* users array */] }
   } catch (error) {
     return thunkAPI.rejectWithValue(
