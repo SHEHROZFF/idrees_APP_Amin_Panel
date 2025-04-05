@@ -2,44 +2,66 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
-import { FaPlus, FaEdit, FaTrash, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import {
+  FaPlus,
+  FaEdit,
+  FaTrash,
+  FaChevronLeft,
+  FaChevronRight,
+} from 'react-icons/fa';
 import { Transition } from '@headlessui/react';
 import { fetchAds, addAd, updateAd, deleteAd } from '../redux/slices/adsSlice';
 
 const Ads = () => {
   const dispatch = useDispatch();
   const { ads, loading, error } = useSelector((state) => state.ads);
+
+  // Modal states
   const [showForm, setShowForm] = useState(false);
   const [currentAd, setCurrentAd] = useState(null);
+
+  // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const adsPerPage = 5;
+
+  // Store the selected image file
+  const [imageFile, setImageFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
 
   useEffect(() => {
     dispatch(fetchAds());
   }, [dispatch]);
 
+  // Pagination logic
+  const indexOfLast = currentPage * adsPerPage;
+  const indexOfFirst = indexOfLast - adsPerPage;
+  const currentAds = ads.slice(indexOfFirst, indexOfLast);
+  const totalPages = Math.ceil(ads.length / adsPerPage);
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+  // --------------------------------
+  // Formik Setup
+  // --------------------------------
   const formik = useFormik({
+    enableReinitialize: true,
     initialValues: {
-      image: currentAd ? currentAd.image : '',
-      title: currentAd ? currentAd.title : '',
-      subtitle: currentAd ? currentAd.subtitle : '',
-      description: currentAd ? currentAd.description : '',
-      link: currentAd ? currentAd.link : '',
-      category: currentAd ? currentAd.category : 'New Course',
-      templateId: currentAd ? currentAd.templateId : 'newCourse',
-      price: currentAd ? currentAd.price : '',
-      startDate:
-        currentAd && currentAd.startDate
-          ? new Date(currentAd.startDate).toISOString().substring(0, 10)
-          : '',
-      endDate:
-        currentAd && currentAd.endDate
-          ? new Date(currentAd.endDate).toISOString().substring(0, 10)
-          : '',
-      targetAudience: currentAd ? currentAd.targetAudience : 'General',
-      ctaText: currentAd ? currentAd.ctaText : 'Learn More',
-      priority: currentAd ? currentAd.priority : 1,
-      cardDesign: currentAd ? currentAd.cardDesign : 'basic',
+      title: currentAd?.title || '',
+      subtitle: currentAd?.subtitle || '',
+      description: currentAd?.description || '',
+      link: currentAd?.link || '',
+      category: currentAd?.category || 'New Course',
+      templateId: currentAd?.templateId || 'newCourse',
+      price: currentAd?.price || '',
+      startDate: currentAd?.startDate
+        ? new Date(currentAd.startDate).toISOString().substring(0, 10)
+        : '',
+      endDate: currentAd?.endDate
+        ? new Date(currentAd.endDate).toISOString().substring(0, 10)
+        : '',
+      targetAudience: currentAd?.targetAudience || 'General',
+      ctaText: currentAd?.ctaText || 'Learn More',
+      priority: currentAd?.priority || 1,
+      cardDesign: currentAd?.cardDesign || 'basic',
       promoCode: currentAd?.promoCode || '',
       limitedOffer: currentAd?.limitedOffer || false,
       instructor: currentAd?.instructor || '',
@@ -48,37 +70,26 @@ const Ads = () => {
       originalPrice: currentAd?.originalPrice || '',
       salePrice: currentAd?.salePrice || '',
       discountPercentage: currentAd?.discountPercentage || '',
-      saleEnds:
-        currentAd && currentAd.saleEnds
-          ? new Date(currentAd.saleEnds).toISOString().substring(0, 10)
-          : '',
-      eventDate:
-        currentAd && currentAd.eventDate
-          ? new Date(currentAd.eventDate).toISOString().substring(0, 10)
-          : '',
+      saleEnds: currentAd?.saleEnds
+        ? new Date(currentAd.saleEnds).toISOString().substring(0, 10)
+        : '',
+      eventDate: currentAd?.eventDate
+        ? new Date(currentAd.eventDate).toISOString().substring(0, 10)
+        : '',
       eventLocation: currentAd?.eventLocation || '',
-      // New fields:
-      adProdtype: currentAd ? currentAd.adProdtype : 'Product',
-      adProdId: currentAd ? currentAd.adProdId : 'Product',
-      // Custom styles
+      adProdtype: currentAd?.adProdtype || 'Product',
+      adProdId: currentAd?.adProdId || 'Product',
+      // Custom Styles
       customStyles: {
         gradientColors:
-          currentAd && currentAd.customStyles && currentAd.customStyles.gradientColors
+          currentAd?.customStyles?.gradientColors?.length
             ? currentAd.customStyles.gradientColors.join(', ')
             : 'rgba(247,151,30,0.95), rgba(255,210,0,0.85)',
-        badgeColor:
-          currentAd && currentAd.customStyles && currentAd.customStyles.badgeColor
-            ? currentAd.customStyles.badgeColor
-            : '#F7971E',
-        textColor:
-          currentAd && currentAd.customStyles && currentAd.customStyles.textColor
-            ? currentAd.customStyles.textColor
-            : '#ffffff',
+        badgeColor: currentAd?.customStyles?.badgeColor || '#F7971E',
+        textColor: currentAd?.customStyles?.textColor || '#ffffff',
       },
     },
-    enableReinitialize: true,
     validationSchema: Yup.object().shape({
-      image: Yup.string().required('Image URL is required'),
       title: Yup.string().required('Title is required'),
       subtitle: Yup.string().required('Subtitle is required'),
       description: Yup.string()
@@ -87,59 +98,114 @@ const Ads = () => {
       link: Yup.string().required('Link is required'),
       category: Yup.string().required('Category is required'),
       templateId: Yup.string().required('Template is required'),
-      startDate: Yup.date().when('templateId', (templateId, schema) => {
-        return templateId === 'sale'
-          ? schema.required('Start date is required')
+      startDate: Yup.date().when('templateId', (val, schema) => {
+        return val === 'sale'
+          ? schema.required('Start date is required for sale template')
           : schema.nullable();
       }),
-      endDate: Yup.date().when('templateId', (templateId, schema) => {
-        return templateId === 'sale'
-          ? schema.required('End date is required')
+      endDate: Yup.date().when('templateId', (val, schema) => {
+        return val === 'sale'
+          ? schema.required('End date is required for sale template')
           : schema.nullable();
       }),
-      saleEnds: Yup.date().when('templateId', (templateId, schema) => {
-        return templateId === 'sale'
+      saleEnds: Yup.date().when('templateId', (val, schema) => {
+        return val === 'sale'
           ? schema.required('Sale end date is required')
           : schema.nullable();
       }),
-      eventDate: Yup.date().when('templateId', (templateId, schema) => {
-        return templateId === 'event'
-          ? schema.required('Event date is required')
+      eventDate: Yup.date().when('templateId', (val, schema) => {
+        return val === 'event'
+          ? schema.required('Event date is required for event template')
           : schema.nullable();
       }),
       priority: Yup.number().min(1, 'Priority must be at least 1'),
-      // New fields validations:
       adProdtype: Yup.string().oneOf(['Product', 'Course']),
-      adProdId: Yup.string(), // No enum constraints here
+      adProdId: Yup.string(),
     }),
     onSubmit: async (values) => {
       try {
-        // Convert gradientColors from comma-separated string to an array
+        // 1) Convert gradientColors from comma-separated string to array
         const customStyles = { ...values.customStyles };
         if (typeof customStyles.gradientColors === 'string') {
           customStyles.gradientColors = customStyles.gradientColors
-            .split(';')
+            .split(',')
             .map((c) => c.trim());
         }
-        const adData = { ...values, customStyles };
 
-        if (currentAd) {
-          await dispatch(updateAd({ id: currentAd._id, adData })).unwrap();
-        } else {
-          await dispatch(addAd(adData)).unwrap();
+        // 2) Build FormData
+        const formData = new FormData();
+        if (imageFile) {
+          formData.append('image', imageFile);
         }
+
+        // 3) Append all other fields
+        formData.append('title', values.title);
+        formData.append('subtitle', values.subtitle);
+        formData.append('description', values.description);
+        formData.append('link', values.link);
+        formData.append('category', values.category);
+        formData.append('templateId', values.templateId);
+        formData.append('price', values.price || '');
+        formData.append('startDate', values.startDate || '');
+        formData.append('endDate', values.endDate || '');
+        formData.append('targetAudience', values.targetAudience || '');
+        formData.append('ctaText', values.ctaText || '');
+        formData.append('priority', values.priority || 1);
+        formData.append('cardDesign', values.cardDesign || 'basic');
+        formData.append('promoCode', values.promoCode || '');
+        formData.append('limitedOffer', values.limitedOffer);
+        formData.append('instructor', values.instructor || '');
+        formData.append('courseInfo', values.courseInfo || '');
+        formData.append('rating', values.rating || '');
+        formData.append('originalPrice', values.originalPrice || '');
+        formData.append('salePrice', values.salePrice || '');
+        formData.append('discountPercentage', values.discountPercentage || '');
+        formData.append('saleEnds', values.saleEnds || '');
+        formData.append('eventDate', values.eventDate || '');
+        formData.append('eventLocation', values.eventLocation || '');
+        formData.append('adProdtype', values.adProdtype);
+        formData.append('adProdId', values.adProdId);
+        // 4) Custom styles -> JSON string
+        formData.append('customStyles', JSON.stringify(customStyles));
+
+        // Debug form data in console
+        console.log('--- FormData fields before sending ---');
+        for (let [key, val] of formData.entries()) {
+          console.log(key, val);
+        }
+        console.log('--------------------------------------');
+
+        // 5) Dispatch
+        if (currentAd) {
+          // update
+          await dispatch(updateAd({ id: currentAd._id, formData })).unwrap();
+        } else {
+          // create
+          await dispatch(addAd(formData)).unwrap();
+        }
+
+        // Cleanup
         setShowForm(false);
         setCurrentAd(null);
+        setImageFile(null);
         formik.resetForm();
         setCurrentPage(1);
       } catch (err) {
-        console.error(currentAd ? 'Update ad error:' : 'Add ad error:', err);
+        console.error(
+          currentAd ? 'Update ad error:' : 'Add ad error:',
+          err
+        );
       }
     },
   });
 
+  // --------------------------------
+  // Handlers
+  // --------------------------------
   const handleEdit = (ad) => {
     setCurrentAd(ad);
+    setImageFile(null);
+    setPreviewUrl(null);
     setShowForm(true);
   };
 
@@ -153,34 +219,34 @@ const Ads = () => {
     }
   };
 
-  // Pagination
-  const indexOfLast = currentPage * adsPerPage;
-  const indexOfFirst = indexOfLast - adsPerPage;
-  const currentAds = ads.slice(indexOfFirst, indexOfLast);
-  const totalPages = Math.ceil(ads.length / adsPerPage);
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
-
   return (
     <div className="p-6 bg-gray-100 dark:bg-gray-900 min-h-screen">
-      <h2 className="text-3xl font-bold mb-6 text-gray-800 dark:text-white">Ads Management</h2>
-      {error && <div className="bg-red-100 text-red-700 p-3 rounded mb-4">{error}</div>}
+      <h2 className="text-3xl font-bold mb-6 text-gray-800 dark:text-white">
+        Ads Management
+      </h2>
+      {error && (
+        <div className="bg-red-100 text-red-700 p-3 rounded mb-4">{error}</div>
+      )}
+
       <button
         onClick={() => {
           setShowForm(true);
           setCurrentAd(null);
+          setImageFile(null);
           formik.resetForm();
         }}
         className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition mb-6 flex items-center"
-        aria-label="Add Ad"
       >
         <FaPlus className="mr-2" /> Add Ad
       </button>
+
       {loading ? (
         <div className="text-gray-800 dark:text-gray-200">Loading...</div>
       ) : (
         <>
-          <div className="overflow-x-auto">
-            <table className="min-w-full bg-white dark:bg-gray-800 rounded-lg shadow-md">
+          {/* Table of Ads */}
+          <div className="overflow-x-auto shadow rounded-lg">
+            <table className="min-w-full bg-white dark:bg-gray-800 rounded-lg">
               <thead className="bg-gray-50 dark:bg-gray-700">
                 <tr>
                   <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
@@ -199,24 +265,39 @@ const Ads = () => {
               </thead>
               <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                 {currentAds.map((ad) => (
-                  <tr key={ad._id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                  <tr
+                    key={ad._id}
+                    className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                  >
                     <td className="py-4 px-6 text-sm text-gray-800 dark:text-gray-200">
-                      <img src={ad.image} alt={ad.title} className="w-20 h-auto rounded" />
+                      {ad.image?.url ? (
+                        <img
+                          src={ad.image.url}
+                          alt={ad.title}
+                          className="w-20 h-auto rounded"
+                        />
+                      ) : (
+                        <div className="w-20 h-auto bg-gray-200 rounded">
+                          No image
+                        </div>
+                      )}
                     </td>
-                    <td className="py-4 px-6 text-sm text-gray-800 dark:text-gray-200">{ad.title}</td>
-                    <td className="py-4 px-6 text-sm text-gray-800 dark:text-gray-200">{ad.subtitle}</td>
+                    <td className="py-4 px-6 text-sm text-gray-800 dark:text-gray-200">
+                      {ad.title}
+                    </td>
+                    <td className="py-4 px-6 text-sm text-gray-800 dark:text-gray-200">
+                      {ad.subtitle}
+                    </td>
                     <td className="py-4 px-6 text-sm text-gray-800 dark:text-gray-200 flex items-center">
                       <button
                         onClick={() => handleEdit(ad)}
                         className="text-blue-500 hover:text-blue-700 mr-4 flex items-center"
-                        aria-label={`Edit ad ${ad.title}`}
                       >
                         <FaEdit className="mr-1" /> Edit
                       </button>
                       <button
                         onClick={() => handleDelete(ad._id)}
                         className="text-red-500 hover:text-red-700 flex items-center"
-                        aria-label={`Delete ad ${ad.title}`}
                       >
                         <FaTrash className="mr-1" /> Delete
                       </button>
@@ -225,7 +306,10 @@ const Ads = () => {
                 ))}
                 {currentAds.length === 0 && (
                   <tr>
-                    <td colSpan="4" className="py-4 px-6 text-center text-gray-600 dark:text-gray-400">
+                    <td
+                      colSpan="4"
+                      className="py-4 px-6 text-center text-gray-600 dark:text-gray-400"
+                    >
                       No ads found.
                     </td>
                   </tr>
@@ -233,6 +317,8 @@ const Ads = () => {
               </tbody>
             </table>
           </div>
+
+          {/* Pagination */}
           {ads.length > adsPerPage && (
             <div className="flex justify-center mt-6">
               <nav aria-label="Page navigation">
@@ -241,9 +327,13 @@ const Ads = () => {
                     <button
                       onClick={() => paginate(currentPage - 1)}
                       disabled={currentPage === 1}
-                      className={`px-3 py-2 ml-0 leading-tight text-gray-500 bg-white dark:bg-gray-800 dark:text-gray-300 border border-gray-300 dark:border-gray-700 rounded-l-lg hover:bg-gray-100 dark:hover:bg-gray-700 ${
-                        currentPage === 1 ? 'cursor-not-allowed opacity-50' : ''
-                      }`}
+                      className={`px-3 py-2 ml-0 leading-tight text-gray-500 bg-white dark:bg-gray-800 dark:text-gray-300 
+                        border border-gray-300 dark:border-gray-700 rounded-l-lg 
+                        hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                          currentPage === 1
+                            ? 'cursor-not-allowed opacity-50'
+                            : ''
+                        }`}
                       aria-label="Previous Page"
                     >
                       <FaChevronLeft />
@@ -253,11 +343,12 @@ const Ads = () => {
                     <li key={index + 1}>
                       <button
                         onClick={() => paginate(index + 1)}
-                        className={`px-3 py-2 leading-tight border border-gray-300 dark:border-gray-700 ${
-                          currentPage === index + 1
-                            ? 'text-blue-600 bg-blue-50 dark:bg-gray-700 dark:text-white'
-                            : 'text-gray-500 bg-white dark:bg-gray-800 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                        }`}
+                        className={`px-3 py-2 leading-tight border border-gray-300 dark:border-gray-700 
+                          ${
+                            currentPage === index + 1
+                              ? 'text-blue-600 bg-blue-50 dark:bg-gray-700 dark:text-white'
+                              : 'text-gray-500 bg-white dark:bg-gray-800 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                          }`}
                         aria-label={`Go to page ${index + 1}`}
                       >
                         {index + 1}
@@ -268,9 +359,13 @@ const Ads = () => {
                     <button
                       onClick={() => paginate(currentPage + 1)}
                       disabled={currentPage === totalPages}
-                      className={`px-3 py-2 leading-tight text-gray-500 bg-white dark:bg-gray-800 dark:text-gray-300 border border-gray-300 dark:border-gray-700 rounded-r-lg hover:bg-gray-100 dark:hover:bg-gray-700 ${
-                        currentPage === totalPages ? 'cursor-not-allowed opacity-50' : ''
-                      }`}
+                      className={`px-3 py-2 leading-tight text-gray-500 bg-white dark:bg-gray-800 dark:text-gray-300 
+                        border border-gray-300 dark:border-gray-700 rounded-r-lg 
+                        hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                          currentPage === totalPages
+                            ? 'cursor-not-allowed opacity-50'
+                            : ''
+                        }`}
                       aria-label="Next Page"
                     >
                       <FaChevronRight />
@@ -282,6 +377,8 @@ const Ads = () => {
           )}
         </>
       )}
+
+      {/* Modal for Creating/Editing Ads */}
       <Transition
         show={showForm}
         enter="transition ease-out duration-300 transform"
@@ -296,357 +393,489 @@ const Ads = () => {
           aria-modal="true"
           role="dialog"
         >
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-2xl w-full max-w-4xl mx-4 overflow-y-auto max-h-[90vh]">
-            <h3 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-gray-200">
-              {currentAd ? 'Edit Ad' : 'Add New Ad'}
-            </h3>
-            <form onSubmit={formik.handleSubmit}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Left Column: Basic Details */}
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-gray-700 dark:text-gray-200">Image URL</label>
-                    <input
-                      type="text"
-                      name="image"
-                      className="w-full px-3 py-2 border rounded focus:outline-none"
-                      value={formik.values.image}
-                      onChange={formik.handleChange}
-                      onBlur={formik.handleBlur}
-                      placeholder="https://example.com/ad.png"
-                    />
-                    {formik.touched.image && formik.errors.image && (
-                      <div className="text-red-500 text-sm mt-1">{formik.errors.image}</div>
-                    )}
+          {/* Modal Content Wrapper */}
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-2xl w-full max-w-4xl mx-4 overflow-hidden">
+            {/* Close & Title */}
+            <div className="flex items-center justify-between border-b pb-4 mb-4">
+              <h3 className="text-2xl font-semibold text-gray-800 dark:text-gray-200">
+                {currentAd ? 'Edit Ad' : 'Add New Ad'}
+              </h3>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowForm(false);
+                  setCurrentAd(null);
+                  setImageFile(null);
+                  formik.resetForm();
+                }}
+                className="text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100 text-3xl leading-none"
+              >
+                &times;
+              </button>
+            </div>
+
+            {/* Scrollable Form Container */}
+            <div className="max-h-[75vh] overflow-y-auto pr-2">
+              <form onSubmit={formik.handleSubmit}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Left Column */}
+                  <div className="space-y-4">
+                    {/* File input for Ad image */}
+                    <div>
+                      <label className="block text-gray-700 dark:text-gray-200">
+                        Ad Image
+                      </label>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          if (e.target.files && e.target.files.length > 0) {
+                            const file = e.target.files[0];
+                            setImageFile(file);
+                            setPreviewUrl(URL.createObjectURL(file));
+                          }
+                        }}
+                        className="w-full px-3 py-2 border rounded focus:outline-none 
+                          dark:bg-gray-700 dark:text-gray-200"
+                      />
+
+                      {/* Show preview of uploaded image */}
+                      {imageFile ? (
+                        <img
+                          src={previewUrl}
+                          alt="Preview"
+                          className="w-20 h-auto rounded mt-2 border"
+                        />
+                      ) : currentAd?.image?.url ? (
+                        <img
+                          src={currentAd.image.url}
+                          alt={currentAd.title}
+                          className="w-20 h-auto rounded mt-2 border"
+                        />
+                      ) : null}
+                    </div>
+
+                    {/* Title */}
+                    <div>
+                      <label className="block text-gray-700 dark:text-gray-200">
+                        Title
+                      </label>
+                      <input
+                        type="text"
+                        name="title"
+                        className="w-full px-3 py-2 border rounded focus:outline-none 
+                          dark:bg-gray-700 dark:text-gray-200"
+                        value={formik.values.title}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        placeholder="Ad Title"
+                      />
+                      {formik.touched.title && formik.errors.title && (
+                        <div className="text-red-500 text-sm mt-1">
+                          {formik.errors.title}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Subtitle */}
+                    <div>
+                      <label className="block text-gray-700 dark:text-gray-200">
+                        Subtitle
+                      </label>
+                      <input
+                        type="text"
+                        name="subtitle"
+                        className="w-full px-3 py-2 border rounded focus:outline-none
+                          dark:bg-gray-700 dark:text-gray-200"
+                        value={formik.values.subtitle}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        placeholder="Ad Subtitle"
+                      />
+                      {formik.touched.subtitle &&
+                        formik.errors.subtitle && (
+                          <div className="text-red-500 text-sm mt-1">
+                            {formik.errors.subtitle}
+                          </div>
+                        )}
+                    </div>
+
+                    {/* Description */}
+                    <div>
+                      <label className="block text-gray-700 dark:text-gray-200">
+                        Description
+                      </label>
+                      <textarea
+                        name="description"
+                        className="w-full px-3 py-2 border rounded focus:outline-none
+                          dark:bg-gray-700 dark:text-gray-200"
+                        value={formik.values.description}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        placeholder="Enter ad description (max 500 characters)"
+                        rows="4"
+                      />
+                      {formik.touched.description &&
+                        formik.errors.description && (
+                          <div className="text-red-500 text-sm mt-1">
+                            {formik.errors.description}
+                          </div>
+                        )}
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-gray-700 dark:text-gray-200">Title</label>
-                    <input
-                      type="text"
-                      name="title"
-                      className="w-full px-3 py-2 border rounded focus:outline-none"
-                      value={formik.values.title}
-                      onChange={formik.handleChange}
-                      onBlur={formik.handleBlur}
-                      placeholder="Ad Title"
-                    />
-                    {formik.touched.title && formik.errors.title && (
-                      <div className="text-red-500 text-sm mt-1">{formik.errors.title}</div>
+
+                  {/* Right Column */}
+                  <div className="space-y-4">
+                    {/* Link */}
+                    <div>
+                      <label className="block text-gray-700 dark:text-gray-200">
+                        Link
+                      </label>
+                      <input
+                        type="text"
+                        name="link"
+                        className="w-full px-3 py-2 border rounded focus:outline-none
+                          dark:bg-gray-700 dark:text-gray-200"
+                        value={formik.values.link}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        placeholder="https://example.com"
+                      />
+                      {formik.touched.link && formik.errors.link && (
+                        <div className="text-red-500 text-sm mt-1">
+                          {formik.errors.link}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Category */}
+                    <div>
+                      <label className="block text-gray-700 dark:text-gray-200">
+                        Category
+                      </label>
+                      <select
+                        name="category"
+                        value={formik.values.category}
+                        onChange={formik.handleChange}
+                        className="w-full px-3 py-2 border rounded focus:outline-none
+                          dark:bg-gray-700 dark:text-gray-200"
+                      >
+                        <option value="New Course">New Course</option>
+                        <option value="Product">Product</option>
+                        <option value="Sale">Sale</option>
+                        <option value="Promotion">Promotion</option>
+                        <option value="Event">Event</option>
+                      </select>
+                      {formik.touched.category && formik.errors.category && (
+                        <div className="text-red-500 text-sm mt-1">
+                          {formik.errors.category}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* TemplateId */}
+                    <div>
+                      <label className="block text-gray-700 dark:text-gray-200">
+                        Template
+                      </label>
+                      <select
+                        name="templateId"
+                        value={formik.values.templateId}
+                        onChange={formik.handleChange}
+                        className="w-full px-3 py-2 border rounded focus:outline-none
+                          dark:bg-gray-700 dark:text-gray-200"
+                      >
+                        <option value="promo">Promotion</option>
+                        <option value="newCourse">New Course</option>
+                        <option value="sale">Sale</option>
+                        <option value="event">Event</option>
+                      </select>
+                      {formik.touched.templateId &&
+                        formik.errors.templateId && (
+                          <div className="text-red-500 text-sm mt-1">
+                            {formik.errors.templateId}
+                          </div>
+                        )}
+                    </div>
+
+                    {/* Ad Prod Type / Id */}
+                    <div>
+                      <label className="block text-gray-700 dark:text-gray-200">
+                        Ad Prod Type
+                      </label>
+                      <select
+                        name="adProdtype"
+                        value={formik.values.adProdtype}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        className="w-full px-3 py-2 border rounded focus:outline-none
+                          dark:bg-gray-700 dark:text-gray-200"
+                      >
+                        <option value="Product">Product</option>
+                        <option value="Course">Course</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-gray-700 dark:text-gray-200">
+                        Ad Prod Id
+                      </label>
+                      <input
+                        type="text"
+                        name="adProdId"
+                        value={formik.values.adProdId}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        className="w-full px-3 py-2 border rounded focus:outline-none
+                          dark:bg-gray-700 dark:text-gray-200"
+                        placeholder="Enter Ad Product ID"
+                      />
+                    </div>
+
+                    {/* Conditionals based on templateId */}
+                    {formik.values.templateId === 'promo' && (
+                      <>
+                        <div>
+                          <label className="block text-gray-700 dark:text-gray-200">
+                            Promo Code
+                          </label>
+                          <input
+                            type="text"
+                            name="promoCode"
+                            className="w-full px-3 py-2 border rounded focus:outline-none 
+                              dark:bg-gray-700 dark:text-gray-200"
+                            value={formik.values.promoCode}
+                            onChange={formik.handleChange}
+                            onBlur={formik.handleBlur}
+                            placeholder="e.g., SAVE20"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-gray-700 dark:text-gray-200">
+                            Limited Offer
+                          </label>
+                          <select
+                            name="limitedOffer"
+                            value={formik.values.limitedOffer}
+                            onChange={formik.handleChange}
+                            className="w-full px-3 py-2 border rounded focus:outline-none 
+                              dark:bg-gray-700 dark:text-gray-200"
+                          >
+                            <option value={false}>No</option>
+                            <option value={true}>Yes</option>
+                          </select>
+                        </div>
+                      </>
                     )}
-                  </div>
-                  <div>
-                    <label className="block text-gray-700 dark:text-gray-200">Subtitle</label>
-                    <input
-                      type="text"
-                      name="subtitle"
-                      className="w-full px-3 py-2 border rounded focus:outline-none"
-                      value={formik.values.subtitle}
-                      onChange={formik.handleChange}
-                      onBlur={formik.handleBlur}
-                      placeholder="Ad Subtitle"
-                    />
-                    {formik.touched.subtitle && formik.errors.subtitle && (
-                      <div className="text-red-500 text-sm mt-1">{formik.errors.subtitle}</div>
+
+                    {formik.values.templateId === 'newCourse' && (
+                      <>
+                        <div>
+                          <label className="block text-gray-700 dark:text-gray-200">
+                            Instructor
+                          </label>
+                          <input
+                            type="text"
+                            name="instructor"
+                            className="w-full px-3 py-2 border rounded focus:outline-none 
+                              dark:bg-gray-700 dark:text-gray-200"
+                            value={formik.values.instructor}
+                            onChange={formik.handleChange}
+                            onBlur={formik.handleBlur}
+                            placeholder="Instructor Name"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-gray-700 dark:text-gray-200">
+                            Course Info
+                          </label>
+                          <textarea
+                            name="courseInfo"
+                            className="w-full px-3 py-2 border rounded focus:outline-none 
+                              dark:bg-gray-700 dark:text-gray-200"
+                            value={formik.values.courseInfo}
+                            onChange={formik.handleChange}
+                            onBlur={formik.handleBlur}
+                            placeholder="Short course description"
+                            rows="2"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-gray-700 dark:text-gray-200">
+                            Rating
+                          </label>
+                          <input
+                            type="number"
+                            name="rating"
+                            className="w-full px-3 py-2 border rounded focus:outline-none 
+                              dark:bg-gray-700 dark:text-gray-200"
+                            value={formik.values.rating}
+                            onChange={formik.handleChange}
+                            onBlur={formik.handleBlur}
+                            placeholder="e.g., 4.5"
+                            step="0.1"
+                          />
+                        </div>
+                      </>
                     )}
-                  </div>
-                  <div>
-                    <label className="block text-gray-700 dark:text-gray-200">Description</label>
-                    <textarea
-                      name="description"
-                      className="w-full px-3 py-2 border rounded focus:outline-none"
-                      value={formik.values.description}
-                      onChange={formik.handleChange}
-                      onBlur={formik.handleBlur}
-                      placeholder="Enter ad description (max 500 characters)"
-                      rows="4"
-                    />
-                    {formik.touched.description && formik.errors.description && (
-                      <div className="text-red-500 text-sm mt-1">{formik.errors.description}</div>
+
+                    {formik.values.templateId === 'sale' && (
+                      <>
+                        <div>
+                          <label className="block text-gray-700 dark:text-gray-200">
+                            Original Price
+                          </label>
+                          <input
+                            type="number"
+                            name="originalPrice"
+                            className="w-full px-3 py-2 border rounded focus:outline-none 
+                              dark:bg-gray-700 dark:text-gray-200"
+                            value={formik.values.originalPrice}
+                            onChange={formik.handleChange}
+                            onBlur={formik.handleBlur}
+                            placeholder="e.g., 199.99"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-gray-700 dark:text-gray-200">
+                            Sale Price
+                          </label>
+                          <input
+                            type="number"
+                            name="salePrice"
+                            className="w-full px-3 py-2 border rounded focus:outline-none 
+                              dark:bg-gray-700 dark:text-gray-200"
+                            value={formik.values.salePrice}
+                            onChange={formik.handleChange}
+                            onBlur={formik.handleBlur}
+                            placeholder="e.g., 149.99"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-gray-700 dark:text-gray-200">
+                            Discount Percentage
+                          </label>
+                          <input
+                            type="number"
+                            name="discountPercentage"
+                            className="w-full px-3 py-2 border rounded focus:outline-none 
+                              dark:bg-gray-700 dark:text-gray-200"
+                            value={formik.values.discountPercentage}
+                            onChange={formik.handleChange}
+                            onBlur={formik.handleBlur}
+                            placeholder="e.g., 25"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-gray-700 dark:text-gray-200">
+                            Sale Ends
+                          </label>
+                          <input
+                            type="date"
+                            name="saleEnds"
+                            className="w-full px-3 py-2 border rounded focus:outline-none 
+                              dark:bg-gray-700 dark:text-gray-200"
+                            value={formik.values.saleEnds}
+                            onChange={formik.handleChange}
+                            onBlur={formik.handleBlur}
+                          />
+                        </div>
+                      </>
+                    )}
+
+                    {formik.values.templateId === 'event' && (
+                      <>
+                        <div>
+                          <label className="block text-gray-700 dark:text-gray-200">
+                            Event Date
+                          </label>
+                          <input
+                            type="date"
+                            name="eventDate"
+                            className="w-full px-3 py-2 border rounded focus:outline-none
+                              dark:bg-gray-700 dark:text-gray-200"
+                            value={formik.values.eventDate}
+                            onChange={formik.handleChange}
+                            onBlur={formik.handleBlur}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-gray-700 dark:text-gray-200">
+                            Event Location
+                          </label>
+                          <input
+                            type="text"
+                            name="eventLocation"
+                            className="w-full px-3 py-2 border rounded focus:outline-none
+                              dark:bg-gray-700 dark:text-gray-200"
+                            value={formik.values.eventLocation}
+                            onChange={formik.handleChange}
+                            onBlur={formik.handleBlur}
+                            placeholder="e.g., New York, NY"
+                          />
+                        </div>
+                      </>
                     )}
                   </div>
                 </div>
-                {/* Right Column: Advanced Settings & Template Fields */}
-                <div className="space-y-4">
+
+                {/* Custom Styles */}
+                <div className="mt-6 space-y-4">
+                  <h4 className="text-xl font-semibold text-gray-800 dark:text-gray-200">
+                    Custom Styles
+                  </h4>
                   <div>
-                    <label className="block text-gray-700 dark:text-gray-200">Link</label>
+                    <label className="block text-gray-700 dark:text-gray-200">
+                      Gradient Colors (comma separated)
+                    </label>
                     <input
                       type="text"
-                      name="link"
-                      className="w-full px-3 py-2 border rounded focus:outline-none"
-                      value={formik.values.link}
+                      name="customStyles.gradientColors"
+                      value={formik.values.customStyles.gradientColors}
                       onChange={formik.handleChange}
                       onBlur={formik.handleBlur}
-                      placeholder="https://example.com"
+                      placeholder="rgba(247,151,30,0.95), rgba(255,210,0,0.85)"
+                      className="w-full px-3 py-2 border rounded focus:outline-none dark:bg-gray-700 dark:text-gray-200"
                     />
-                    {formik.touched.link && formik.errors.link && (
-                      <div className="text-red-500 text-sm mt-1">{formik.errors.link}</div>
-                    )}
                   </div>
                   <div>
-                    <label className="block text-gray-700 dark:text-gray-200">Category</label>
-                    <select
-                      name="category"
-                      value={formik.values.category}
-                      onChange={formik.handleChange}
-                      className="w-full px-3 py-2 border rounded focus:outline-none"
-                    >
-                      <option value="New Course">New Course</option>
-                      <option value="Product">Product</option>
-                      <option value="Sale">Sale</option>
-                      <option value="Promotion">Promotion</option>
-                      <option value="Event">Event</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-gray-700 dark:text-gray-200">Template</label>
-                    <select
-                      name="templateId"
-                      value={formik.values.templateId}
-                      onChange={formik.handleChange}
-                      className="w-full px-3 py-2 border rounded focus:outline-none"
-                    >
-                      <option value="promo">Promotion</option>
-                      <option value="newCourse">New Course</option>
-                      <option value="sale">Sale</option>
-                      <option value="event">Event</option>
-                    </select>
-                    {formik.touched.templateId && formik.errors.templateId && (
-                      <div className="text-red-500 text-sm mt-1">{formik.errors.templateId}</div>
-                    )}
-                  </div>
-                  {/* New Fields: Ad Prod Type and Ad Prod Id */}
-                  <div>
-                    <label className="block text-gray-700 dark:text-gray-200">Ad Prod Type</label>
-                    <select
-                      name="adProdtype"
-                      value={formik.values.adProdtype}
-                      onChange={formik.handleChange}
-                      onBlur={formik.handleBlur}
-                      className="w-full px-3 py-2 border rounded focus:outline-none"
-                    >
-                      <option value="Product">Product</option>
-                      <option value="Course">Course</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-gray-700 dark:text-gray-200">Ad Prod Id</label>
+                    <label className="block text-gray-700 dark:text-gray-200">
+                      Badge Color
+                    </label>
                     <input
-                      type="text"
-                      name="adProdId"
-                      value={formik.values.adProdId}
+                      type="color"
+                      name="customStyles.badgeColor"
+                      value={formik.values.customStyles.badgeColor}
                       onChange={formik.handleChange}
                       onBlur={formik.handleBlur}
-                      className="w-full px-3 py-2 border rounded focus:outline-none"
-                      placeholder="Enter Ad Product ID"
+                      className="w-full px-3 py-2 border rounded focus:outline-none dark:bg-gray-700 dark:text-gray-200"
                     />
                   </div>
-                  {/* Conditional fields based on template selection */}
-                  {formik.values.templateId === 'promo' && (
-                    <>
-                      <div>
-                        <label className="block text-gray-700 dark:text-gray-200">Promo Code</label>
-                        <input
-                          type="text"
-                          name="promoCode"
-                          className="w-full px-3 py-2 border rounded focus:outline-none"
-                          value={formik.values.promoCode}
-                          onChange={formik.handleChange}
-                          onBlur={formik.handleBlur}
-                          placeholder="e.g., SAVE20"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-gray-700 dark:text-gray-200">Limited Offer</label>
-                        <select
-                          name="limitedOffer"
-                          value={formik.values.limitedOffer}
-                          onChange={formik.handleChange}
-                          className="w-full px-3 py-2 border rounded focus:outline-none"
-                        >
-                          <option value={false}>No</option>
-                          <option value={true}>Yes</option>
-                        </select>
-                      </div>
-                    </>
-                  )}
-                  {formik.values.templateId === 'newCourse' && (
-                    <>
-                      <div>
-                        <label className="block text-gray-700 dark:text-gray-200">Instructor</label>
-                        <input
-                          type="text"
-                          name="instructor"
-                          className="w-full px-3 py-2 border rounded focus:outline-none"
-                          value={formik.values.instructor}
-                          onChange={formik.handleChange}
-                          onBlur={formik.handleBlur}
-                          placeholder="Instructor Name"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-gray-700 dark:text-gray-200">Course Info</label>
-                        <textarea
-                          name="courseInfo"
-                          className="w-full px-3 py-2 border rounded focus:outline-none"
-                          value={formik.values.courseInfo}
-                          onChange={formik.handleChange}
-                          onBlur={formik.handleBlur}
-                          placeholder="Short course description"
-                          rows="2"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-gray-700 dark:text-gray-200">Rating</label>
-                        <input
-                          type="number"
-                          name="rating"
-                          className="w-full px-3 py-2 border rounded focus:outline-none"
-                          value={formik.values.rating}
-                          onChange={formik.handleChange}
-                          onBlur={formik.handleBlur}
-                          placeholder="e.g., 4.5"
-                          step="0.1"
-                        />
-                      </div>
-                    </>
-                  )}
-                  {formik.values.templateId === 'sale' && (
-                    <>
-                      <div>
-                        <label className="block text-gray-700 dark:text-gray-200">Original Price</label>
-                        <input
-                          type="number"
-                          name="originalPrice"
-                          className="w-full px-3 py-2 border rounded focus:outline-none"
-                          value={formik.values.originalPrice}
-                          onChange={formik.handleChange}
-                          onBlur={formik.handleBlur}
-                          placeholder="e.g., 199.99"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-gray-700 dark:text-gray-200">Sale Price</label>
-                        <input
-                          type="number"
-                          name="salePrice"
-                          className="w-full px-3 py-2 border rounded focus:outline-none"
-                          value={formik.values.salePrice}
-                          onChange={formik.handleChange}
-                          onBlur={formik.handleBlur}
-                          placeholder="e.g., 149.99"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-gray-700 dark:text-gray-200">Discount Percentage</label>
-                        <input
-                          type="number"
-                          name="discountPercentage"
-                          className="w-full px-3 py-2 border rounded focus:outline-none"
-                          value={formik.values.discountPercentage}
-                          onChange={formik.handleChange}
-                          onBlur={formik.handleBlur}
-                          placeholder="e.g., 25"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-gray-700 dark:text-gray-200">Sale Ends</label>
-                        <input
-                          type="date"
-                          name="saleEnds"
-                          className="w-full px-3 py-2 border rounded focus:outline-none"
-                          value={formik.values.saleEnds}
-                          onChange={formik.handleChange}
-                          onBlur={formik.handleBlur}
-                        />
-                      </div>
-                    </>
-                  )}
-                  {formik.values.templateId === 'event' && (
-                    <>
-                      <div>
-                        <label className="block text-gray-700 dark:text-gray-200">Event Date</label>
-                        <input
-                          type="date"
-                          name="eventDate"
-                          className="w-full px-3 py-2 border rounded focus:outline-none"
-                          value={formik.values.eventDate}
-                          onChange={formik.handleChange}
-                          onBlur={formik.handleBlur}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-gray-700 dark:text-gray-200">Event Location</label>
-                        <input
-                          type="text"
-                          name="eventLocation"
-                          className="w-full px-3 py-2 border rounded focus:outline-none"
-                          value={formik.values.eventLocation}
-                          onChange={formik.handleChange}
-                          onBlur={formik.handleBlur}
-                          placeholder="e.g., New York, NY"
-                        />
-                      </div>
-                    </>
-                  )}
+                  <div>
+                    <label className="block text-gray-700 dark:text-gray-200">
+                      Text Color
+                    </label>
+                    <input
+                      type="color"
+                      name="customStyles.textColor"
+                      value={formik.values.customStyles.textColor}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                      className="w-full px-3 py-2 border rounded focus:outline-none dark:bg-gray-700 dark:text-gray-200"
+                    />
+                  </div>
                 </div>
-              </div>
-              {/* Custom Styles Section */}
-              <div className="mt-6 space-y-4">
-                <h4 className="text-xl font-semibold text-gray-800 dark:text-gray-200">Custom Styles</h4>
-                <div>
-                  <label className="block text-gray-700 dark:text-gray-200">
-                    Gradient Colors (';' separated)
-                  </label>
-                  <input
-                    type="text"
-                    name="customStyles.gradientColors"
-                    value={formik.values.customStyles.gradientColors}
-                    onChange={formik.handleChange}
-                    onBlur={formik.handleBlur}
-                    placeholder="rgba(247,151,30,0.95), rgba(255,210,0,0.85)"
-                    className="w-full px-3 py-2 border rounded focus:outline-none"
-                  />
+
+                {/* Buttons */}
+                <div className="flex justify-end mt-6">
+                  <button
+                    type="submit"
+                    className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition"
+                  >
+                    {currentAd ? 'Update' : 'Add'}
+                  </button>
                 </div>
-                <div>
-                  <label className="block text-gray-700 dark:text-gray-200">Badge Color</label>
-                  <input
-                    type="color"
-                    name="customStyles.badgeColor"
-                    value={formik.values.customStyles.badgeColor}
-                    onChange={formik.handleChange}
-                    onBlur={formik.handleBlur}
-                    className="w-full px-3 py-2 border rounded focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-gray-700 dark:text-gray-200">Text Color</label>
-                  <input
-                    type="color"
-                    name="customStyles.textColor"
-                    value={formik.values.customStyles.textColor}
-                    onChange={formik.handleChange}
-                    onBlur={formik.handleBlur}
-                    className="w-full px-3 py-2 border rounded focus:outline-none"
-                  />
-                </div>
-              </div>
-              <div className="flex justify-end mt-6">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowForm(false);
-                    setCurrentAd(null);
-                    formik.resetForm();
-                  }}
-                  className="bg-gray-500 text-white px-4 py-2 rounded mr-2 hover:bg-gray-600 transition"
-                >
-                  Cancel
-                </button>
-                <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition">
-                  {currentAd ? 'Update' : 'Add'}
-                </button>
-              </div>
-            </form>
+              </form>
+            </div>
           </div>
         </div>
       </Transition>
@@ -655,6 +884,1489 @@ const Ads = () => {
 };
 
 export default Ads;
+
+
+
+
+
+
+
+
+
+
+// import React, { useEffect, useState } from 'react';
+// import { useDispatch, useSelector } from 'react-redux';
+// import { useFormik } from 'formik';
+// import * as Yup from 'yup';
+// import { FaPlus, FaEdit, FaTrash, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+// import { Transition } from '@headlessui/react';
+// import { fetchAds, addAd, updateAd, deleteAd } from '../redux/slices/adsSlice';
+
+// const Ads = () => {
+//   const dispatch = useDispatch();
+//   const { ads, loading, error } = useSelector((state) => state.ads);
+
+//   // Modal states
+//   const [showForm, setShowForm] = useState(false);
+//   const [currentAd, setCurrentAd] = useState(null);
+
+//   // Pagination
+//   const [currentPage, setCurrentPage] = useState(1);
+//   const adsPerPage = 5;
+
+//   // Store the selected image file outside Formik
+//   const [imageFile, setImageFile] = useState(null);
+//   const [previewUrl, setPreviewUrl] = useState(null);
+
+//   useEffect(() => {
+//     dispatch(fetchAds());
+//   }, [dispatch]);
+
+//   // Paginate logic
+//   const indexOfLast = currentPage * adsPerPage;
+//   const indexOfFirst = indexOfLast - adsPerPage;
+//   const currentAds = ads.slice(indexOfFirst, indexOfLast);
+//   const totalPages = Math.ceil(ads.length / adsPerPage);
+//   const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+//   // --------------------------------
+//   // Formik Setup
+//   // --------------------------------
+//   const formik = useFormik({
+//     enableReinitialize: true,
+//     initialValues: {
+//       title: currentAd?.title || '',
+//       subtitle: currentAd?.subtitle || '',
+//       description: currentAd?.description || '',
+//       link: currentAd?.link || '',
+//       category: currentAd?.category || 'New Course',
+//       templateId: currentAd?.templateId || 'newCourse',
+//       price: currentAd?.price || '',
+//       startDate: currentAd?.startDate
+//         ? new Date(currentAd.startDate).toISOString().substring(0, 10)
+//         : '',
+//       endDate: currentAd?.endDate
+//         ? new Date(currentAd.endDate).toISOString().substring(0, 10)
+//         : '',
+//       targetAudience: currentAd?.targetAudience || 'General',
+//       ctaText: currentAd?.ctaText || 'Learn More',
+//       priority: currentAd?.priority || 1,
+//       cardDesign: currentAd?.cardDesign || 'basic',
+//       promoCode: currentAd?.promoCode || '',
+//       limitedOffer: currentAd?.limitedOffer || false,
+//       instructor: currentAd?.instructor || '',
+//       courseInfo: currentAd?.courseInfo || '',
+//       rating: currentAd?.rating || '',
+//       originalPrice: currentAd?.originalPrice || '',
+//       salePrice: currentAd?.salePrice || '',
+//       discountPercentage: currentAd?.discountPercentage || '',
+//       saleEnds: currentAd?.saleEnds
+//         ? new Date(currentAd.saleEnds).toISOString().substring(0, 10)
+//         : '',
+//       eventDate: currentAd?.eventDate
+//         ? new Date(currentAd.eventDate).toISOString().substring(0, 10)
+//         : '',
+//       eventLocation: currentAd?.eventLocation || '',
+//       adProdtype: currentAd?.adProdtype || 'Product',
+//       adProdId: currentAd?.adProdId || 'Product',
+
+//       // Custom Styles
+//       customStyles: {
+//         gradientColors:
+//           currentAd?.customStyles?.gradientColors?.length
+//             ? currentAd.customStyles.gradientColors.join(', ')
+//             : 'rgba(247,151,30,0.95), rgba(255,210,0,0.85)',
+//         badgeColor: currentAd?.customStyles?.badgeColor || '#F7971E',
+//         textColor: currentAd?.customStyles?.textColor || '#ffffff',
+//       },
+//     },
+//     validationSchema: Yup.object().shape({
+//       title: Yup.string().required('Title is required'),
+//       subtitle: Yup.string().required('Subtitle is required'),
+//       description: Yup.string().required('Description is required').max(500, 'Max 500 characters'),
+//       link: Yup.string().required('Link is required'),
+//       category: Yup.string().required('Category is required'),
+//       templateId: Yup.string().required('Template is required'),
+//       startDate: Yup.date().when('templateId', (val, schema) => {
+//         return val === 'sale'
+//           ? schema.required('Start date is required for sale template')
+//           : schema.nullable();
+//       }),
+//       endDate: Yup.date().when('templateId', (val, schema) => {
+//         return val === 'sale'
+//           ? schema.required('End date is required for sale template')
+//           : schema.nullable();
+//       }),
+//       saleEnds: Yup.date().when('templateId', (val, schema) => {
+//         return val === 'sale'
+//           ? schema.required('Sale end date is required')
+//           : schema.nullable();
+//       }),
+//       eventDate: Yup.date().when('templateId', (val, schema) => {
+//         return val === 'event'
+//           ? schema.required('Event date is required for event template')
+//           : schema.nullable();
+//       }),
+//       priority: Yup.number().min(1, 'Priority must be at least 1'),
+//       adProdtype: Yup.string().oneOf(['Product', 'Course']),
+//       adProdId: Yup.string(),
+//     }),
+//     onSubmit: async (values) => {
+//       try {
+//         // 1) Convert gradientColors from comma-separated string to an array
+//         const customStyles = { ...values.customStyles };
+//         if (typeof customStyles.gradientColors === 'string') {
+//           customStyles.gradientColors = customStyles.gradientColors
+//             .split(',')
+//             .map((c) => c.trim());
+//         }
+
+//         // 2) Build FormData
+//         const formData = new FormData();
+
+//         // If user selected a new image file
+//         if (imageFile) {
+//           formData.append('image', imageFile);
+//         }
+
+//         // 3) Append all other fields
+//         formData.append('title', values.title);
+//         formData.append('subtitle', values.subtitle);
+//         formData.append('description', values.description);
+//         formData.append('link', values.link);
+//         formData.append('category', values.category);
+//         formData.append('templateId', values.templateId);
+//         formData.append('price', values.price || '');
+//         formData.append('startDate', values.startDate || '');
+//         formData.append('endDate', values.endDate || '');
+//         formData.append('targetAudience', values.targetAudience || '');
+//         formData.append('ctaText', values.ctaText || '');
+//         formData.append('priority', values.priority || 1);
+//         formData.append('cardDesign', values.cardDesign || 'basic');
+//         formData.append('promoCode', values.promoCode || '');
+//         formData.append('limitedOffer', values.limitedOffer);
+//         formData.append('instructor', values.instructor || '');
+//         formData.append('courseInfo', values.courseInfo || '');
+//         formData.append('rating', values.rating || '');
+//         formData.append('originalPrice', values.originalPrice || '');
+//         formData.append('salePrice', values.salePrice || '');
+//         formData.append('discountPercentage', values.discountPercentage || '');
+//         formData.append('saleEnds', values.saleEnds || '');
+//         formData.append('eventDate', values.eventDate || '');
+//         formData.append('eventLocation', values.eventLocation || '');
+//         formData.append('adProdtype', values.adProdtype);
+//         formData.append('adProdId', values.adProdId);
+
+//         // 4) Custom styles -> JSON string
+//         formData.append('customStyles', JSON.stringify(customStyles));
+
+//         // ---- DEBUG: Log every field in the FormData to see what's appended
+//         console.log('--- FormData fields before sending ---');
+//         for (let [key, val] of formData.entries()) {
+//           console.log(key, val);
+//         }
+//         console.log('--------------------------------------');
+
+//         // 5) Dispatch
+//         if (currentAd) {
+//           // update
+//           await dispatch(updateAd({ id: currentAd._id, formData })).unwrap();
+//         } else {
+//           // create
+//           await dispatch(addAd(formData)).unwrap();
+//         }
+
+//         // Cleanup
+//         setShowForm(false);
+//         setCurrentAd(null);
+//         setImageFile(null);
+//         formik.resetForm();
+//         setCurrentPage(1);
+//       } catch (err) {
+//         console.error(currentAd ? 'Update ad error:' : 'Add ad error:', err);
+//       }
+//     },
+//   });
+
+//   // --------------------------------
+//   // Handlers
+//   // --------------------------------
+//   const handleEdit = (ad) => {
+//     setCurrentAd(ad);
+//     setImageFile(null);
+//     setShowForm(true);
+//   };
+
+//   const handleDelete = async (id) => {
+//     if (window.confirm('Are you sure you want to delete this ad?')) {
+//       try {
+//         await dispatch(deleteAd(id)).unwrap();
+//       } catch (err) {
+//         console.error('Delete ad error:', err);
+//       }
+//     }
+//   };
+
+//   return (
+//     <div className="p-6 bg-gray-100 dark:bg-gray-900 min-h-screen">
+//       <h2 className="text-3xl font-bold mb-6 text-gray-800 dark:text-white">Ads Management</h2>
+//       {error && <div className="bg-red-100 text-red-700 p-3 rounded mb-4">{error}</div>}
+
+//       <button
+//         onClick={() => {
+//           setShowForm(true);
+//           setCurrentAd(null);
+//           setImageFile(null);
+//           formik.resetForm();
+//         }}
+//         className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition mb-6 flex items-center"
+//       >
+//         <FaPlus className="mr-2" /> Add Ad
+//       </button>
+
+//       {loading ? (
+//         <div className="text-gray-800 dark:text-gray-200">Loading...</div>
+//       ) : (
+//         <>
+//           {/* Table of Ads */}
+//           <div className="overflow-x-auto">
+//             <table className="min-w-full bg-white dark:bg-gray-800 rounded-lg shadow-md">
+//               <thead className="bg-gray-50 dark:bg-gray-700">
+//                 <tr>
+//                   <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+//                     Image
+//                   </th>
+//                   <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+//                     Title
+//                   </th>
+//                   <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+//                     Subtitle
+//                   </th>
+//                   <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+//                     Actions
+//                   </th>
+//                 </tr>
+//               </thead>
+//               <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+//                 {currentAds.map((ad) => (
+//                   <tr
+//                     key={ad._id}
+//                     className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+//                   >
+//                     <td className="py-4 px-6 text-sm text-gray-800 dark:text-gray-200">
+//                       {ad.image?.url ? (
+//                         <img src={ad.image.url} alt={ad.title} className="w-20 h-auto rounded" />
+//                       ) : (
+//                         <div className="w-20 h-auto bg-gray-200 rounded">No image</div>
+//                       )}
+//                     </td>
+//                     <td className="py-4 px-6 text-sm text-gray-800 dark:text-gray-200">
+//                       {ad.title}
+//                     </td>
+//                     <td className="py-4 px-6 text-sm text-gray-800 dark:text-gray-200">
+//                       {ad.subtitle}
+//                     </td>
+//                     <td className="py-4 px-6 text-sm text-gray-800 dark:text-gray-200 flex items-center">
+//                       <button
+//                         onClick={() => handleEdit(ad)}
+//                         className="text-blue-500 hover:text-blue-700 mr-4 flex items-center"
+//                       >
+//                         <FaEdit className="mr-1" /> Edit
+//                       </button>
+//                       <button
+//                         onClick={() => handleDelete(ad._id)}
+//                         className="text-red-500 hover:text-red-700 flex items-center"
+//                       >
+//                         <FaTrash className="mr-1" /> Delete
+//                       </button>
+//                     </td>
+//                   </tr>
+//                 ))}
+//                 {currentAds.length === 0 && (
+//                   <tr>
+//                     <td colSpan="4" className="py-4 px-6 text-center text-gray-600 dark:text-gray-400">
+//                       No ads found.
+//                     </td>
+//                   </tr>
+//                 )}
+//               </tbody>
+//             </table>
+//           </div>
+
+//           {/* Pagination */}
+//           {ads.length > adsPerPage && (
+//             <div className="flex justify-center mt-6">
+//               <nav aria-label="Page navigation">
+//                 <ul className="inline-flex -space-x-px">
+//                   <li>
+//                     <button
+//                       onClick={() => paginate(currentPage - 1)}
+//                       disabled={currentPage === 1}
+//                       className={`px-3 py-2 ml-0 leading-tight text-gray-500 bg-white dark:bg-gray-800 dark:text-gray-300 
+//                                   border border-gray-300 dark:border-gray-700 rounded-l-lg 
+//                                   hover:bg-gray-100 dark:hover:bg-gray-700 ${
+//                                     currentPage === 1 ? 'cursor-not-allowed opacity-50' : ''
+//                                   }`}
+//                       aria-label="Previous Page"
+//                     >
+//                       <FaChevronLeft />
+//                     </button>
+//                   </li>
+//                   {[...Array(totalPages)].map((_, index) => (
+//                     <li key={index + 1}>
+//                       <button
+//                         onClick={() => paginate(index + 1)}
+//                         className={`px-3 py-2 leading-tight border border-gray-300 dark:border-gray-700 
+//                                     ${
+//                                       currentPage === index + 1
+//                                         ? 'text-blue-600 bg-blue-50 dark:bg-gray-700 dark:text-white'
+//                                         : 'text-gray-500 bg-white dark:bg-gray-800 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+//                                     }`}
+//                         aria-label={`Go to page ${index + 1}`}
+//                       >
+//                         {index + 1}
+//                       </button>
+//                     </li>
+//                   ))}
+//                   <li>
+//                     <button
+//                       onClick={() => paginate(currentPage + 1)}
+//                       disabled={currentPage === totalPages}
+//                       className={`px-3 py-2 leading-tight text-gray-500 bg-white dark:bg-gray-800 dark:text-gray-300 
+//                                   border border-gray-300 dark:border-gray-700 rounded-r-lg 
+//                                   hover:bg-gray-100 dark:hover:bg-gray-700 ${
+//                                     currentPage === totalPages ? 'cursor-not-allowed opacity-50' : ''
+//                                   }`}
+//                       aria-label="Next Page"
+//                     >
+//                       <FaChevronRight />
+//                     </button>
+//                   </li>
+//                 </ul>
+//               </nav>
+//             </div>
+//           )}
+//         </>
+//       )}
+
+//       {/* Modal for Creating/Editing Ads */}
+//       <Transition
+//         show={showForm}
+//         enter="transition ease-out duration-300 transform"
+//         enterFrom="opacity-0 scale-95"
+//         enterTo="opacity-100 scale-100"
+//         leave="transition ease-in duration-200 transform"
+//         leaveFrom="opacity-100 scale-100"
+//         leaveTo="opacity-0 scale-95"
+//       >
+//         <div
+//           className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
+//           aria-modal="true"
+//           role="dialog"
+//         >
+//           <div
+//             className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-2xl w-full max-w-4xl mx-4 
+//                        overflow-y-auto max-h-[90vh]"
+//           >
+//             <div className="flex items-center justify-between border-b pb-4 mb-6">
+//               <h3 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-gray-200">
+//                 {currentAd ? 'Edit Ad' : 'Add New Ad'}
+//               </h3>
+//               <button
+//                 type="button"
+//                 onClick={() => {
+//                   setShowForm(false);
+//                   setCurrentAd(null);
+//                   setImageFile(null);
+//                   formik.resetForm();
+//                 }}
+//                   className="text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100 text-3xl leading-none"
+//               >
+//                 &times;
+//               </button>
+//             </div>
+
+//             <form onSubmit={formik.handleSubmit}>
+//               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+//                 {/* Left Column */}
+//                 <div className="space-y-4">
+//                   {/* File input for Ad image */}
+//                   <div>
+//                     <label className="block text-gray-700 dark:text-gray-200">Ad Image</label>
+//                     <input
+//                       type="file"
+//                       accept="image/*"
+//                       onChange={(e) => {
+//                         if (e.target.files && e.target.files.length > 0) {
+//                           const file = e.target.files[0];
+//                           setImageFile(file);
+//                           setPreviewUrl(URL.createObjectURL(file)); // 👈 generate preview URL
+//                         }
+//                       }}
+//                       className="w-full px-3 py-2 border rounded focus:outline-none 
+//                                 dark:bg-gray-700 dark:text-gray-200"
+//                     />
+
+//                     {/* Show preview of uploaded image */}
+//                     {imageFile ? (
+//                       <img
+//                         src={previewUrl}
+//                         alt="Preview"
+//                         className="w-20 h-auto rounded mt-2 border"
+//                       />
+//                     ) : currentAd?.image?.url ? (
+//                       <img
+//                         src={currentAd.image.url}
+//                         alt={currentAd.title}
+//                         className="w-20 h-auto rounded mt-2 border"
+//                       />
+//                     ) : null}
+//                   </div>
+
+
+//                   {/* Title */}
+//                   <div>
+//                     <label className="block text-gray-700 dark:text-gray-200">Title</label>
+//                     <input
+//                       type="text"
+//                       name="title"
+//                       className="w-full px-3 py-2 border rounded focus:outline-none 
+//                                  dark:bg-gray-700 dark:text-gray-200"
+//                       value={formik.values.title}
+//                       onChange={formik.handleChange}
+//                       onBlur={formik.handleBlur}
+//                       placeholder="Ad Title"
+//                     />
+//                     {formik.touched.title && formik.errors.title && (
+//                       <div className="text-red-500 text-sm mt-1">{formik.errors.title}</div>
+//                     )}
+//                   </div>
+
+//                   {/* Subtitle */}
+//                   <div>
+//                     <label className="block text-gray-700 dark:text-gray-200">Subtitle</label>
+//                     <input
+//                       type="text"
+//                       name="subtitle"
+//                       className="w-full px-3 py-2 border rounded focus:outline-none
+//                                  dark:bg-gray-700 dark:text-gray-200"
+//                       value={formik.values.subtitle}
+//                       onChange={formik.handleChange}
+//                       onBlur={formik.handleBlur}
+//                       placeholder="Ad Subtitle"
+//                     />
+//                     {formik.touched.subtitle && formik.errors.subtitle && (
+//                       <div className="text-red-500 text-sm mt-1">{formik.errors.subtitle}</div>
+//                     )}
+//                   </div>
+
+//                   {/* Description */}
+//                   <div>
+//                     <label className="block text-gray-700 dark:text-gray-200">Description</label>
+//                     <textarea
+//                       name="description"
+//                       className="w-full px-3 py-2 border rounded focus:outline-none
+//                                  dark:bg-gray-700 dark:text-gray-200"
+//                       value={formik.values.description}
+//                       onChange={formik.handleChange}
+//                       onBlur={formik.handleBlur}
+//                       placeholder="Enter ad description (max 500 characters)"
+//                       rows="4"
+//                     />
+//                     {formik.touched.description && formik.errors.description && (
+//                       <div className="text-red-500 text-sm mt-1">{formik.errors.description}</div>
+//                     )}
+//                   </div>
+//                 </div>
+
+//                 {/* Right Column */}
+//                 <div className="space-y-4">
+//                   {/* Link */}
+//                   <div>
+//                     <label className="block text-gray-700 dark:text-gray-200">Link</label>
+//                     <input
+//                       type="text"
+//                       name="link"
+//                       className="w-full px-3 py-2 border rounded focus:outline-none
+//                                  dark:bg-gray-700 dark:text-gray-200"
+//                       value={formik.values.link}
+//                       onChange={formik.handleChange}
+//                       onBlur={formik.handleBlur}
+//                       placeholder="https://example.com"
+//                     />
+//                     {formik.touched.link && formik.errors.link && (
+//                       <div className="text-red-500 text-sm mt-1">{formik.errors.link}</div>
+//                     )}
+//                   </div>
+
+//                   {/* Category */}
+//                   <div>
+//                     <label className="block text-gray-700 dark:text-gray-200">Category</label>
+//                     <select
+//                       name="category"
+//                       value={formik.values.category}
+//                       onChange={formik.handleChange}
+//                       className="w-full px-3 py-2 border rounded focus:outline-none
+//                                  dark:bg-gray-700 dark:text-gray-200"
+//                     >
+//                       <option value="New Course">New Course</option>
+//                       <option value="Product">Product</option>
+//                       <option value="Sale">Sale</option>
+//                       <option value="Promotion">Promotion</option>
+//                       <option value="Event">Event</option>
+//                     </select>
+//                     {formik.touched.category && formik.errors.category && (
+//                       <div className="text-red-500 text-sm mt-1">{formik.errors.category}</div>
+//                     )}
+//                   </div>
+
+//                   {/* TemplateId */}
+//                   <div>
+//                     <label className="block text-gray-700 dark:text-gray-200">Template</label>
+//                     <select
+//                       name="templateId"
+//                       value={formik.values.templateId}
+//                       onChange={formik.handleChange}
+//                       className="w-full px-3 py-2 border rounded focus:outline-none
+//                                  dark:bg-gray-700 dark:text-gray-200"
+//                     >
+//                       <option value="promo">Promotion</option>
+//                       <option value="newCourse">New Course</option>
+//                       <option value="sale">Sale</option>
+//                       <option value="event">Event</option>
+//                     </select>
+//                     {formik.touched.templateId && formik.errors.templateId && (
+//                       <div className="text-red-500 text-sm mt-1">{formik.errors.templateId}</div>
+//                     )}
+//                   </div>
+
+//                   {/* Ad Prod Type / Id */}
+//                   <div>
+//                     <label className="block text-gray-700 dark:text-gray-200">Ad Prod Type</label>
+//                     <select
+//                       name="adProdtype"
+//                       value={formik.values.adProdtype}
+//                       onChange={formik.handleChange}
+//                       onBlur={formik.handleBlur}
+//                       className="w-full px-3 py-2 border rounded focus:outline-none
+//                                  dark:bg-gray-700 dark:text-gray-200"
+//                     >
+//                       <option value="Product">Product</option>
+//                       <option value="Course">Course</option>
+//                     </select>
+//                   </div>
+//                   <div>
+//                     <label className="block text-gray-700 dark:text-gray-200">Ad Prod Id</label>
+//                     <input
+//                       type="text"
+//                       name="adProdId"
+//                       value={formik.values.adProdId}
+//                       onChange={formik.handleChange}
+//                       onBlur={formik.handleBlur}
+//                       className="w-full px-3 py-2 border rounded focus:outline-none
+//                                  dark:bg-gray-700 dark:text-gray-200"
+//                       placeholder="Enter Ad Product ID"
+//                     />
+//                   </div>
+
+//                   {/* Conditionals based on templateId */}
+//                   {formik.values.templateId === 'promo' && (
+//                     <>
+//                       <div>
+//                         <label className="block text-gray-700 dark:text-gray-200">Promo Code</label>
+//                         <input
+//                           type="text"
+//                           name="promoCode"
+//                           className="w-full px-3 py-2 border rounded focus:outline-none 
+//                                      dark:bg-gray-700 dark:text-gray-200"
+//                           value={formik.values.promoCode}
+//                           onChange={formik.handleChange}
+//                           onBlur={formik.handleBlur}
+//                           placeholder="e.g., SAVE20"
+//                         />
+//                       </div>
+//                       <div>
+//                         <label className="block text-gray-700 dark:text-gray-200">Limited Offer</label>
+//                         <select
+//                           name="limitedOffer"
+//                           value={formik.values.limitedOffer}
+//                           onChange={formik.handleChange}
+//                           className="w-full px-3 py-2 border rounded focus:outline-none 
+//                                      dark:bg-gray-700 dark:text-gray-200"
+//                         >
+//                           <option value={false}>No</option>
+//                           <option value={true}>Yes</option>
+//                         </select>
+//                       </div>
+//                     </>
+//                   )}
+
+//                   {formik.values.templateId === 'newCourse' && (
+//                     <>
+//                       <div>
+//                         <label className="block text-gray-700 dark:text-gray-200">Instructor</label>
+//                         <input
+//                           type="text"
+//                           name="instructor"
+//                           className="w-full px-3 py-2 border rounded focus:outline-none 
+//                                      dark:bg-gray-700 dark:text-gray-200"
+//                           value={formik.values.instructor}
+//                           onChange={formik.handleChange}
+//                           onBlur={formik.handleBlur}
+//                           placeholder="Instructor Name"
+//                         />
+//                       </div>
+//                       <div>
+//                         <label className="block text-gray-700 dark:text-gray-200">Course Info</label>
+//                         <textarea
+//                           name="courseInfo"
+//                           className="w-full px-3 py-2 border rounded focus:outline-none 
+//                                      dark:bg-gray-700 dark:text-gray-200"
+//                           value={formik.values.courseInfo}
+//                           onChange={formik.handleChange}
+//                           onBlur={formik.handleBlur}
+//                           placeholder="Short course description"
+//                           rows="2"
+//                         />
+//                       </div>
+//                       <div>
+//                         <label className="block text-gray-700 dark:text-gray-200">Rating</label>
+//                         <input
+//                           type="number"
+//                           name="rating"
+//                           className="w-full px-3 py-2 border rounded focus:outline-none 
+//                                      dark:bg-gray-700 dark:text-gray-200"
+//                           value={formik.values.rating}
+//                           onChange={formik.handleChange}
+//                           onBlur={formik.handleBlur}
+//                           placeholder="e.g., 4.5"
+//                           step="0.1"
+//                         />
+//                       </div>
+//                     </>
+//                   )}
+
+//                   {formik.values.templateId === 'sale' && (
+//                     <>
+//                       <div>
+//                         <label className="block text-gray-700 dark:text-gray-200">Original Price</label>
+//                         <input
+//                           type="number"
+//                           name="originalPrice"
+//                           className="w-full px-3 py-2 border rounded focus:outline-none 
+//                                      dark:bg-gray-700 dark:text-gray-200"
+//                           value={formik.values.originalPrice}
+//                           onChange={formik.handleChange}
+//                           onBlur={formik.handleBlur}
+//                           placeholder="e.g., 199.99"
+//                         />
+//                       </div>
+//                       <div>
+//                         <label className="block text-gray-700 dark:text-gray-200">Sale Price</label>
+//                         <input
+//                           type="number"
+//                           name="salePrice"
+//                           className="w-full px-3 py-2 border rounded focus:outline-none 
+//                                      dark:bg-gray-700 dark:text-gray-200"
+//                           value={formik.values.salePrice}
+//                           onChange={formik.handleChange}
+//                           onBlur={formik.handleBlur}
+//                           placeholder="e.g., 149.99"
+//                         />
+//                       </div>
+//                       <div>
+//                         <label className="block text-gray-700 dark:text-gray-200">
+//                           Discount Percentage
+//                         </label>
+//                         <input
+//                           type="number"
+//                           name="discountPercentage"
+//                           className="w-full px-3 py-2 border rounded focus:outline-none 
+//                                      dark:bg-gray-700 dark:text-gray-200"
+//                           value={formik.values.discountPercentage}
+//                           onChange={formik.handleChange}
+//                           onBlur={formik.handleBlur}
+//                           placeholder="e.g., 25"
+//                         />
+//                       </div>
+//                       <div>
+//                         <label className="block text-gray-700 dark:text-gray-200">Sale Ends</label>
+//                         <input
+//                           type="date"
+//                           name="saleEnds"
+//                           className="w-full px-3 py-2 border rounded focus:outline-none 
+//                                      dark:bg-gray-700 dark:text-gray-200"
+//                           value={formik.values.saleEnds}
+//                           onChange={formik.handleChange}
+//                           onBlur={formik.handleBlur}
+//                         />
+//                       </div>
+//                     </>
+//                   )}
+
+//                   {formik.values.templateId === 'event' && (
+//                     <>
+//                       <div>
+//                         <label className="block text-gray-700 dark:text-gray-200">Event Date</label>
+//                         <input
+//                           type="date"
+//                           name="eventDate"
+//                           className="w-full px-3 py-2 border rounded focus:outline-none
+//                                      dark:bg-gray-700 dark:text-gray-200"
+//                           value={formik.values.eventDate}
+//                           onChange={formik.handleChange}
+//                           onBlur={formik.handleBlur}
+//                         />
+//                       </div>
+//                       <div>
+//                         <label className="block text-gray-700 dark:text-gray-200">Event Location</label>
+//                         <input
+//                           type="text"
+//                           name="eventLocation"
+//                           className="w-full px-3 py-2 border rounded focus:outline-none
+//                                      dark:bg-gray-700 dark:text-gray-200"
+//                           value={formik.values.eventLocation}
+//                           onChange={formik.handleChange}
+//                           onBlur={formik.handleBlur}
+//                           placeholder="e.g., New York, NY"
+//                         />
+//                       </div>
+//                     </>
+//                   )}
+//                 </div>
+//               </div>
+
+//               {/* Custom Styles */}
+//               <div className="mt-6 space-y-4">
+//                 <h4 className="text-xl font-semibold text-gray-800 dark:text-gray-200">Custom Styles</h4>
+//                 <div>
+//                   <label className="block text-gray-700 dark:text-gray-200">
+//                     Gradient Colors (comma separated)
+//                   </label>
+//                   <input
+//                     type="text"
+//                     name="customStyles.gradientColors"
+//                     value={formik.values.customStyles.gradientColors}
+//                     onChange={formik.handleChange}
+//                     onBlur={formik.handleBlur}
+//                     placeholder="rgba(247,151,30,0.95), rgba(255,210,0,0.85)"
+//                     className="w-full px-3 py-2 border rounded focus:outline-none dark:bg-gray-700 dark:text-gray-200"
+//                   />
+//                 </div>
+//                 <div>
+//                   <label className="block text-gray-700 dark:text-gray-200">Badge Color</label>
+//                   <input
+//                     type="color"
+//                     name="customStyles.badgeColor"
+//                     value={formik.values.customStyles.badgeColor}
+//                     onChange={formik.handleChange}
+//                     onBlur={formik.handleBlur}
+//                     className="w-full px-3 py-2 border rounded focus:outline-none dark:bg-gray-700 dark:text-gray-200"
+//                   />
+//                 </div>
+//                 <div>
+//                   <label className="block text-gray-700 dark:text-gray-200">Text Color</label>
+//                   <input
+//                     type="color"
+//                     name="customStyles.textColor"
+//                     value={formik.values.customStyles.textColor}
+//                     onChange={formik.handleChange}
+//                     onBlur={formik.handleBlur}
+//                     className="w-full px-3 py-2 border rounded focus:outline-none dark:bg-gray-700 dark:text-gray-200"
+//                   />
+//                 </div>
+//               </div>
+
+//               {/* Buttons */}
+//               <div className="flex justify-end mt-6">
+//                 {/* <button
+//                   type="button"
+//                   onClick={() => {
+//                     setShowForm(false);
+//                     setCurrentAd(null);
+//                     setImageFile(null);
+//                     formik.resetForm();
+//                   }}
+//                   className="bg-gray-500 text-white px-4 py-2 rounded mr-2 hover:bg-gray-600 transition"
+//                 >
+//                   Cancel
+//                 </button> */}
+//                 <button
+//                   type="submit"
+//                   className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition"
+//                 >
+//                   {currentAd ? 'Update' : 'Add'}
+//                 </button>
+//               </div>
+//             </form>
+//           </div>
+//         </div>
+//       </Transition>
+//     </div>
+//   );
+// };
+
+// export default Ads;
+
+
+
+// import React, { useEffect, useState } from 'react';
+// import { useDispatch, useSelector } from 'react-redux';
+// import { useFormik } from 'formik';
+// import * as Yup from 'yup';
+// import { FaPlus, FaEdit, FaTrash, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+// import { Transition } from '@headlessui/react';
+// import { fetchAds, addAd, updateAd, deleteAd } from '../redux/slices/adsSlice';
+
+// const Ads = () => {
+//   const dispatch = useDispatch();
+//   const { ads, loading, error } = useSelector((state) => state.ads);
+//   const [showForm, setShowForm] = useState(false);
+//   const [currentAd, setCurrentAd] = useState(null);
+//   const [currentPage, setCurrentPage] = useState(1);
+//   const adsPerPage = 5;
+
+//   useEffect(() => {
+//     dispatch(fetchAds());
+//   }, [dispatch]);
+
+//   const formik = useFormik({
+//     initialValues: {
+//       image: currentAd ? currentAd.image : '',
+//       title: currentAd ? currentAd.title : '',
+//       subtitle: currentAd ? currentAd.subtitle : '',
+//       description: currentAd ? currentAd.description : '',
+//       link: currentAd ? currentAd.link : '',
+//       category: currentAd ? currentAd.category : 'New Course',
+//       templateId: currentAd ? currentAd.templateId : 'newCourse',
+//       price: currentAd ? currentAd.price : '',
+//       startDate:
+//         currentAd && currentAd.startDate
+//           ? new Date(currentAd.startDate).toISOString().substring(0, 10)
+//           : '',
+//       endDate:
+//         currentAd && currentAd.endDate
+//           ? new Date(currentAd.endDate).toISOString().substring(0, 10)
+//           : '',
+//       targetAudience: currentAd ? currentAd.targetAudience : 'General',
+//       ctaText: currentAd ? currentAd.ctaText : 'Learn More',
+//       priority: currentAd ? currentAd.priority : 1,
+//       cardDesign: currentAd ? currentAd.cardDesign : 'basic',
+//       promoCode: currentAd?.promoCode || '',
+//       limitedOffer: currentAd?.limitedOffer || false,
+//       instructor: currentAd?.instructor || '',
+//       courseInfo: currentAd?.courseInfo || '',
+//       rating: currentAd?.rating || '',
+//       originalPrice: currentAd?.originalPrice || '',
+//       salePrice: currentAd?.salePrice || '',
+//       discountPercentage: currentAd?.discountPercentage || '',
+//       saleEnds:
+//         currentAd && currentAd.saleEnds
+//           ? new Date(currentAd.saleEnds).toISOString().substring(0, 10)
+//           : '',
+//       eventDate:
+//         currentAd && currentAd.eventDate
+//           ? new Date(currentAd.eventDate).toISOString().substring(0, 10)
+//           : '',
+//       eventLocation: currentAd?.eventLocation || '',
+//       // New fields:
+//       adProdtype: currentAd ? currentAd.adProdtype : 'Product',
+//       adProdId: currentAd ? currentAd.adProdId : 'Product',
+//       // Custom styles
+//       customStyles: {
+//         gradientColors:
+//           currentAd && currentAd.customStyles && currentAd.customStyles.gradientColors
+//             ? currentAd.customStyles.gradientColors.join(', ')
+//             : 'rgba(247,151,30,0.95), rgba(255,210,0,0.85)',
+//         badgeColor:
+//           currentAd && currentAd.customStyles && currentAd.customStyles.badgeColor
+//             ? currentAd.customStyles.badgeColor
+//             : '#F7971E',
+//         textColor:
+//           currentAd && currentAd.customStyles && currentAd.customStyles.textColor
+//             ? currentAd.customStyles.textColor
+//             : '#ffffff',
+//       },
+//     },
+//     enableReinitialize: true,
+//     validationSchema: Yup.object().shape({
+//       image: Yup.string().required('Image URL is required'),
+//       title: Yup.string().required('Title is required'),
+//       subtitle: Yup.string().required('Subtitle is required'),
+//       description: Yup.string()
+//         .required('Description is required')
+//         .max(500, 'Max 500 characters'),
+//       link: Yup.string().required('Link is required'),
+//       category: Yup.string().required('Category is required'),
+//       templateId: Yup.string().required('Template is required'),
+//       startDate: Yup.date().when('templateId', (templateId, schema) => {
+//         return templateId === 'sale'
+//           ? schema.required('Start date is required')
+//           : schema.nullable();
+//       }),
+//       endDate: Yup.date().when('templateId', (templateId, schema) => {
+//         return templateId === 'sale'
+//           ? schema.required('End date is required')
+//           : schema.nullable();
+//       }),
+//       saleEnds: Yup.date().when('templateId', (templateId, schema) => {
+//         return templateId === 'sale'
+//           ? schema.required('Sale end date is required')
+//           : schema.nullable();
+//       }),
+//       eventDate: Yup.date().when('templateId', (templateId, schema) => {
+//         return templateId === 'event'
+//           ? schema.required('Event date is required')
+//           : schema.nullable();
+//       }),
+//       priority: Yup.number().min(1, 'Priority must be at least 1'),
+//       // New fields validations:
+//       adProdtype: Yup.string().oneOf(['Product', 'Course']),
+//       adProdId: Yup.string(), // No enum constraints here
+//     }),
+//     onSubmit: async (values) => {
+//       try {
+//         // Convert gradientColors from comma-separated string to an array
+//         const customStyles = { ...values.customStyles };
+//         if (typeof customStyles.gradientColors === 'string') {
+//           customStyles.gradientColors = customStyles.gradientColors
+//             .split(';')
+//             .map((c) => c.trim());
+//         }
+//         const adData = { ...values, customStyles };
+
+//         if (currentAd) {
+//           await dispatch(updateAd({ id: currentAd._id, adData })).unwrap();
+//         } else {
+//           await dispatch(addAd(adData)).unwrap();
+//         }
+//         setShowForm(false);
+//         setCurrentAd(null);
+//         formik.resetForm();
+//         setCurrentPage(1);
+//       } catch (err) {
+//         console.error(currentAd ? 'Update ad error:' : 'Add ad error:', err);
+//       }
+//     },
+//   });
+
+//   const handleEdit = (ad) => {
+//     setCurrentAd(ad);
+//     setShowForm(true);
+//   };
+
+//   const handleDelete = async (id) => {
+//     if (window.confirm('Are you sure you want to delete this ad?')) {
+//       try {
+//         await dispatch(deleteAd(id)).unwrap();
+//       } catch (err) {
+//         console.error('Delete ad error:', err);
+//       }
+//     }
+//   };
+
+//   // Pagination
+//   const indexOfLast = currentPage * adsPerPage;
+//   const indexOfFirst = indexOfLast - adsPerPage;
+//   const currentAds = ads.slice(indexOfFirst, indexOfLast);
+//   const totalPages = Math.ceil(ads.length / adsPerPage);
+//   const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+//   return (
+//     <div className="p-6 bg-gray-100 dark:bg-gray-900 min-h-screen">
+//       <h2 className="text-3xl font-bold mb-6 text-gray-800 dark:text-white">Ads Management</h2>
+//       {error && <div className="bg-red-100 text-red-700 p-3 rounded mb-4">{error}</div>}
+//       <button
+//         onClick={() => {
+//           setShowForm(true);
+//           setCurrentAd(null);
+//           formik.resetForm();
+//         }}
+//         className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition mb-6 flex items-center"
+//         aria-label="Add Ad"
+//       >
+//         <FaPlus className="mr-2" /> Add Ad
+//       </button>
+//       {loading ? (
+//         <div className="text-gray-800 dark:text-gray-200">Loading...</div>
+//       ) : (
+//         <>
+//           <div className="overflow-x-auto">
+//             <table className="min-w-full bg-white dark:bg-gray-800 rounded-lg shadow-md">
+//               <thead className="bg-gray-50 dark:bg-gray-700">
+//                 <tr>
+//                   <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+//                     Image
+//                   </th>
+//                   <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+//                     Title
+//                   </th>
+//                   <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+//                     Subtitle
+//                   </th>
+//                   <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+//                     Actions
+//                   </th>
+//                 </tr>
+//               </thead>
+//               <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+//                 {currentAds.map((ad) => (
+//                   <tr key={ad._id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+//                     <td className="py-4 px-6 text-sm text-gray-800 dark:text-gray-200">
+//                       <img src={ad.image} alt={ad.title} className="w-20 h-auto rounded" />
+//                     </td>
+//                     <td className="py-4 px-6 text-sm text-gray-800 dark:text-gray-200">{ad.title}</td>
+//                     <td className="py-4 px-6 text-sm text-gray-800 dark:text-gray-200">{ad.subtitle}</td>
+//                     <td className="py-4 px-6 text-sm text-gray-800 dark:text-gray-200 flex items-center">
+//                       <button
+//                         onClick={() => handleEdit(ad)}
+//                         className="text-blue-500 hover:text-blue-700 mr-4 flex items-center"
+//                         aria-label={`Edit ad ${ad.title}`}
+//                       >
+//                         <FaEdit className="mr-1" /> Edit
+//                       </button>
+//                       <button
+//                         onClick={() => handleDelete(ad._id)}
+//                         className="text-red-500 hover:text-red-700 flex items-center"
+//                         aria-label={`Delete ad ${ad.title}`}
+//                       >
+//                         <FaTrash className="mr-1" /> Delete
+//                       </button>
+//                     </td>
+//                   </tr>
+//                 ))}
+//                 {currentAds.length === 0 && (
+//                   <tr>
+//                     <td colSpan="4" className="py-4 px-6 text-center text-gray-600 dark:text-gray-400">
+//                       No ads found.
+//                     </td>
+//                   </tr>
+//                 )}
+//               </tbody>
+//             </table>
+//           </div>
+//           {ads.length > adsPerPage && (
+//             <div className="flex justify-center mt-6">
+//               <nav aria-label="Page navigation">
+//                 <ul className="inline-flex -space-x-px">
+//                   <li>
+//                     <button
+//                       onClick={() => paginate(currentPage - 1)}
+//                       disabled={currentPage === 1}
+//                       className={`px-3 py-2 ml-0 leading-tight text-gray-500 bg-white dark:bg-gray-800 dark:text-gray-300 border border-gray-300 dark:border-gray-700 rounded-l-lg hover:bg-gray-100 dark:hover:bg-gray-700 ${
+//                         currentPage === 1 ? 'cursor-not-allowed opacity-50' : ''
+//                       }`}
+//                       aria-label="Previous Page"
+//                     >
+//                       <FaChevronLeft />
+//                     </button>
+//                   </li>
+//                   {[...Array(totalPages)].map((_, index) => (
+//                     <li key={index + 1}>
+//                       <button
+//                         onClick={() => paginate(index + 1)}
+//                         className={`px-3 py-2 leading-tight border border-gray-300 dark:border-gray-700 ${
+//                           currentPage === index + 1
+//                             ? 'text-blue-600 bg-blue-50 dark:bg-gray-700 dark:text-white'
+//                             : 'text-gray-500 bg-white dark:bg-gray-800 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+//                         }`}
+//                         aria-label={`Go to page ${index + 1}`}
+//                       >
+//                         {index + 1}
+//                       </button>
+//                     </li>
+//                   ))}
+//                   <li>
+//                     <button
+//                       onClick={() => paginate(currentPage + 1)}
+//                       disabled={currentPage === totalPages}
+//                       className={`px-3 py-2 leading-tight text-gray-500 bg-white dark:bg-gray-800 dark:text-gray-300 border border-gray-300 dark:border-gray-700 rounded-r-lg hover:bg-gray-100 dark:hover:bg-gray-700 ${
+//                         currentPage === totalPages ? 'cursor-not-allowed opacity-50' : ''
+//                       }`}
+//                       aria-label="Next Page"
+//                     >
+//                       <FaChevronRight />
+//                     </button>
+//                   </li>
+//                 </ul>
+//               </nav>
+//             </div>
+//           )}
+//         </>
+//       )}
+//       <Transition
+//         show={showForm}
+//         enter="transition ease-out duration-300 transform"
+//         enterFrom="opacity-0 scale-95"
+//         enterTo="opacity-100 scale-100"
+//         leave="transition ease-in duration-200 transform"
+//         leaveFrom="opacity-100 scale-100"
+//         leaveTo="opacity-0 scale-95"
+//       >
+//         <div
+//           className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
+//           aria-modal="true"
+//           role="dialog"
+//         >
+//           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-2xl w-full max-w-4xl mx-4 overflow-y-auto max-h-[90vh]">
+//             <h3 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-gray-200">
+//               {currentAd ? 'Edit Ad' : 'Add New Ad'}
+//             </h3>
+//             <form onSubmit={formik.handleSubmit}>
+//               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+//                 {/* Left Column: Basic Details */}
+//                 <div className="space-y-4">
+//                   <div>
+//                     <label className="block text-gray-700 dark:text-gray-200">Image URL</label>
+//                     <input
+//                       type="text"
+//                       name="image"
+//                       className="w-full px-3 py-2 border rounded focus:outline-none"
+//                       value={formik.values.image}
+//                       onChange={formik.handleChange}
+//                       onBlur={formik.handleBlur}
+//                       placeholder="https://example.com/ad.png"
+//                     />
+//                     {formik.touched.image && formik.errors.image && (
+//                       <div className="text-red-500 text-sm mt-1">{formik.errors.image}</div>
+//                     )}
+//                   </div>
+//                   <div>
+//                     <label className="block text-gray-700 dark:text-gray-200">Title</label>
+//                     <input
+//                       type="text"
+//                       name="title"
+//                       className="w-full px-3 py-2 border rounded focus:outline-none"
+//                       value={formik.values.title}
+//                       onChange={formik.handleChange}
+//                       onBlur={formik.handleBlur}
+//                       placeholder="Ad Title"
+//                     />
+//                     {formik.touched.title && formik.errors.title && (
+//                       <div className="text-red-500 text-sm mt-1">{formik.errors.title}</div>
+//                     )}
+//                   </div>
+//                   <div>
+//                     <label className="block text-gray-700 dark:text-gray-200">Subtitle</label>
+//                     <input
+//                       type="text"
+//                       name="subtitle"
+//                       className="w-full px-3 py-2 border rounded focus:outline-none"
+//                       value={formik.values.subtitle}
+//                       onChange={formik.handleChange}
+//                       onBlur={formik.handleBlur}
+//                       placeholder="Ad Subtitle"
+//                     />
+//                     {formik.touched.subtitle && formik.errors.subtitle && (
+//                       <div className="text-red-500 text-sm mt-1">{formik.errors.subtitle}</div>
+//                     )}
+//                   </div>
+//                   <div>
+//                     <label className="block text-gray-700 dark:text-gray-200">Description</label>
+//                     <textarea
+//                       name="description"
+//                       className="w-full px-3 py-2 border rounded focus:outline-none"
+//                       value={formik.values.description}
+//                       onChange={formik.handleChange}
+//                       onBlur={formik.handleBlur}
+//                       placeholder="Enter ad description (max 500 characters)"
+//                       rows="4"
+//                     />
+//                     {formik.touched.description && formik.errors.description && (
+//                       <div className="text-red-500 text-sm mt-1">{formik.errors.description}</div>
+//                     )}
+//                   </div>
+//                 </div>
+//                 {/* Right Column: Advanced Settings & Template Fields */}
+//                 <div className="space-y-4">
+//                   <div>
+//                     <label className="block text-gray-700 dark:text-gray-200">Link</label>
+//                     <input
+//                       type="text"
+//                       name="link"
+//                       className="w-full px-3 py-2 border rounded focus:outline-none"
+//                       value={formik.values.link}
+//                       onChange={formik.handleChange}
+//                       onBlur={formik.handleBlur}
+//                       placeholder="https://example.com"
+//                     />
+//                     {formik.touched.link && formik.errors.link && (
+//                       <div className="text-red-500 text-sm mt-1">{formik.errors.link}</div>
+//                     )}
+//                   </div>
+//                   <div>
+//                     <label className="block text-gray-700 dark:text-gray-200">Category</label>
+//                     <select
+//                       name="category"
+//                       value={formik.values.category}
+//                       onChange={formik.handleChange}
+//                       className="w-full px-3 py-2 border rounded focus:outline-none"
+//                     >
+//                       <option value="New Course">New Course</option>
+//                       <option value="Product">Product</option>
+//                       <option value="Sale">Sale</option>
+//                       <option value="Promotion">Promotion</option>
+//                       <option value="Event">Event</option>
+//                     </select>
+//                   </div>
+//                   <div>
+//                     <label className="block text-gray-700 dark:text-gray-200">Template</label>
+//                     <select
+//                       name="templateId"
+//                       value={formik.values.templateId}
+//                       onChange={formik.handleChange}
+//                       className="w-full px-3 py-2 border rounded focus:outline-none"
+//                     >
+//                       <option value="promo">Promotion</option>
+//                       <option value="newCourse">New Course</option>
+//                       <option value="sale">Sale</option>
+//                       <option value="event">Event</option>
+//                     </select>
+//                     {formik.touched.templateId && formik.errors.templateId && (
+//                       <div className="text-red-500 text-sm mt-1">{formik.errors.templateId}</div>
+//                     )}
+//                   </div>
+//                   {/* New Fields: Ad Prod Type and Ad Prod Id */}
+//                   <div>
+//                     <label className="block text-gray-700 dark:text-gray-200">Ad Prod Type</label>
+//                     <select
+//                       name="adProdtype"
+//                       value={formik.values.adProdtype}
+//                       onChange={formik.handleChange}
+//                       onBlur={formik.handleBlur}
+//                       className="w-full px-3 py-2 border rounded focus:outline-none"
+//                     >
+//                       <option value="Product">Product</option>
+//                       <option value="Course">Course</option>
+//                     </select>
+//                   </div>
+//                   <div>
+//                     <label className="block text-gray-700 dark:text-gray-200">Ad Prod Id</label>
+//                     <input
+//                       type="text"
+//                       name="adProdId"
+//                       value={formik.values.adProdId}
+//                       onChange={formik.handleChange}
+//                       onBlur={formik.handleBlur}
+//                       className="w-full px-3 py-2 border rounded focus:outline-none"
+//                       placeholder="Enter Ad Product ID"
+//                     />
+//                   </div>
+//                   {/* Conditional fields based on template selection */}
+//                   {formik.values.templateId === 'promo' && (
+//                     <>
+//                       <div>
+//                         <label className="block text-gray-700 dark:text-gray-200">Promo Code</label>
+//                         <input
+//                           type="text"
+//                           name="promoCode"
+//                           className="w-full px-3 py-2 border rounded focus:outline-none"
+//                           value={formik.values.promoCode}
+//                           onChange={formik.handleChange}
+//                           onBlur={formik.handleBlur}
+//                           placeholder="e.g., SAVE20"
+//                         />
+//                       </div>
+//                       <div>
+//                         <label className="block text-gray-700 dark:text-gray-200">Limited Offer</label>
+//                         <select
+//                           name="limitedOffer"
+//                           value={formik.values.limitedOffer}
+//                           onChange={formik.handleChange}
+//                           className="w-full px-3 py-2 border rounded focus:outline-none"
+//                         >
+//                           <option value={false}>No</option>
+//                           <option value={true}>Yes</option>
+//                         </select>
+//                       </div>
+//                     </>
+//                   )}
+//                   {formik.values.templateId === 'newCourse' && (
+//                     <>
+//                       <div>
+//                         <label className="block text-gray-700 dark:text-gray-200">Instructor</label>
+//                         <input
+//                           type="text"
+//                           name="instructor"
+//                           className="w-full px-3 py-2 border rounded focus:outline-none"
+//                           value={formik.values.instructor}
+//                           onChange={formik.handleChange}
+//                           onBlur={formik.handleBlur}
+//                           placeholder="Instructor Name"
+//                         />
+//                       </div>
+//                       <div>
+//                         <label className="block text-gray-700 dark:text-gray-200">Course Info</label>
+//                         <textarea
+//                           name="courseInfo"
+//                           className="w-full px-3 py-2 border rounded focus:outline-none"
+//                           value={formik.values.courseInfo}
+//                           onChange={formik.handleChange}
+//                           onBlur={formik.handleBlur}
+//                           placeholder="Short course description"
+//                           rows="2"
+//                         />
+//                       </div>
+//                       <div>
+//                         <label className="block text-gray-700 dark:text-gray-200">Rating</label>
+//                         <input
+//                           type="number"
+//                           name="rating"
+//                           className="w-full px-3 py-2 border rounded focus:outline-none"
+//                           value={formik.values.rating}
+//                           onChange={formik.handleChange}
+//                           onBlur={formik.handleBlur}
+//                           placeholder="e.g., 4.5"
+//                           step="0.1"
+//                         />
+//                       </div>
+//                     </>
+//                   )}
+//                   {formik.values.templateId === 'sale' && (
+//                     <>
+//                       <div>
+//                         <label className="block text-gray-700 dark:text-gray-200">Original Price</label>
+//                         <input
+//                           type="number"
+//                           name="originalPrice"
+//                           className="w-full px-3 py-2 border rounded focus:outline-none"
+//                           value={formik.values.originalPrice}
+//                           onChange={formik.handleChange}
+//                           onBlur={formik.handleBlur}
+//                           placeholder="e.g., 199.99"
+//                         />
+//                       </div>
+//                       <div>
+//                         <label className="block text-gray-700 dark:text-gray-200">Sale Price</label>
+//                         <input
+//                           type="number"
+//                           name="salePrice"
+//                           className="w-full px-3 py-2 border rounded focus:outline-none"
+//                           value={formik.values.salePrice}
+//                           onChange={formik.handleChange}
+//                           onBlur={formik.handleBlur}
+//                           placeholder="e.g., 149.99"
+//                         />
+//                       </div>
+//                       <div>
+//                         <label className="block text-gray-700 dark:text-gray-200">Discount Percentage</label>
+//                         <input
+//                           type="number"
+//                           name="discountPercentage"
+//                           className="w-full px-3 py-2 border rounded focus:outline-none"
+//                           value={formik.values.discountPercentage}
+//                           onChange={formik.handleChange}
+//                           onBlur={formik.handleBlur}
+//                           placeholder="e.g., 25"
+//                         />
+//                       </div>
+//                       <div>
+//                         <label className="block text-gray-700 dark:text-gray-200">Sale Ends</label>
+//                         <input
+//                           type="date"
+//                           name="saleEnds"
+//                           className="w-full px-3 py-2 border rounded focus:outline-none"
+//                           value={formik.values.saleEnds}
+//                           onChange={formik.handleChange}
+//                           onBlur={formik.handleBlur}
+//                         />
+//                       </div>
+//                     </>
+//                   )}
+//                   {formik.values.templateId === 'event' && (
+//                     <>
+//                       <div>
+//                         <label className="block text-gray-700 dark:text-gray-200">Event Date</label>
+//                         <input
+//                           type="date"
+//                           name="eventDate"
+//                           className="w-full px-3 py-2 border rounded focus:outline-none"
+//                           value={formik.values.eventDate}
+//                           onChange={formik.handleChange}
+//                           onBlur={formik.handleBlur}
+//                         />
+//                       </div>
+//                       <div>
+//                         <label className="block text-gray-700 dark:text-gray-200">Event Location</label>
+//                         <input
+//                           type="text"
+//                           name="eventLocation"
+//                           className="w-full px-3 py-2 border rounded focus:outline-none"
+//                           value={formik.values.eventLocation}
+//                           onChange={formik.handleChange}
+//                           onBlur={formik.handleBlur}
+//                           placeholder="e.g., New York, NY"
+//                         />
+//                       </div>
+//                     </>
+//                   )}
+//                 </div>
+//               </div>
+//               {/* Custom Styles Section */}
+//               <div className="mt-6 space-y-4">
+//                 <h4 className="text-xl font-semibold text-gray-800 dark:text-gray-200">Custom Styles</h4>
+//                 <div>
+//                   <label className="block text-gray-700 dark:text-gray-200">
+//                     Gradient Colors (';' separated)
+//                   </label>
+//                   <input
+//                     type="text"
+//                     name="customStyles.gradientColors"
+//                     value={formik.values.customStyles.gradientColors}
+//                     onChange={formik.handleChange}
+//                     onBlur={formik.handleBlur}
+//                     placeholder="rgba(247,151,30,0.95), rgba(255,210,0,0.85)"
+//                     className="w-full px-3 py-2 border rounded focus:outline-none"
+//                   />
+//                 </div>
+//                 <div>
+//                   <label className="block text-gray-700 dark:text-gray-200">Badge Color</label>
+//                   <input
+//                     type="color"
+//                     name="customStyles.badgeColor"
+//                     value={formik.values.customStyles.badgeColor}
+//                     onChange={formik.handleChange}
+//                     onBlur={formik.handleBlur}
+//                     className="w-full px-3 py-2 border rounded focus:outline-none"
+//                   />
+//                 </div>
+//                 <div>
+//                   <label className="block text-gray-700 dark:text-gray-200">Text Color</label>
+//                   <input
+//                     type="color"
+//                     name="customStyles.textColor"
+//                     value={formik.values.customStyles.textColor}
+//                     onChange={formik.handleChange}
+//                     onBlur={formik.handleBlur}
+//                     className="w-full px-3 py-2 border rounded focus:outline-none"
+//                   />
+//                 </div>
+//               </div>
+//               <div className="flex justify-end mt-6">
+//                 <button
+//                   type="button"
+//                   onClick={() => {
+//                     setShowForm(false);
+//                     setCurrentAd(null);
+//                     formik.resetForm();
+//                   }}
+//                   className="bg-gray-500 text-white px-4 py-2 rounded mr-2 hover:bg-gray-600 transition"
+//                 >
+//                   Cancel
+//                 </button>
+//                 <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition">
+//                   {currentAd ? 'Update' : 'Add'}
+//                 </button>
+//               </div>
+//             </form>
+//           </div>
+//         </div>
+//       </Transition>
+//     </div>
+//   );
+// };
+
+// export default Ads;
 
 
 

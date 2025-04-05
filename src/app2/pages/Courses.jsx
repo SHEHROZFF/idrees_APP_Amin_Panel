@@ -32,6 +32,7 @@ import {
 // --------------------------------
 // Sortable video item component
 // --------------------------------
+
 const SortableVideoItem = ({
   video,
   index,
@@ -39,6 +40,10 @@ const SortableVideoItem = ({
   editingVideoIndex,
   setEditingVideoIndex,
   remove,
+  setVideoFile,
+  setCoverFile,
+  videoFilePreview, // new prop: preview file for video at this index
+  coverFilePreview, // new prop: preview file for cover at this index
 }) => {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
     id: index,
@@ -63,6 +68,7 @@ const SortableVideoItem = ({
       {editingVideoIndex === index ? (
         // Editing view
         <div>
+          {/* Title */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
               Video Title
@@ -73,41 +79,80 @@ const SortableVideoItem = ({
               value={video.title || ''}
               onChange={form.handleChange}
               onBlur={form.handleBlur}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm px-3 py-2
-                         focus:border-blue-500 focus:ring focus:ring-blue-200 dark:bg-gray-700 dark:text-gray-200"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm px-3 py-2 dark:bg-gray-700 dark:text-gray-200"
               placeholder="Enter video title"
             />
           </div>
+
+          {/* Video file */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-              Video URL
+              Video File
             </label>
             <input
-              type="text"
-              name={`videos[${index}].url`}
-              value={video.url || ''}
-              onChange={form.handleChange}
-              onBlur={form.handleBlur}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm px-3 py-2
-                         focus:border-blue-500 focus:ring focus:ring-blue-200 dark:bg-gray-700 dark:text-gray-200"
-              placeholder="https://example.com/video.mp4"
+              type="file"
+              accept="video/*"
+              onChange={(e) => {
+                if (e.target.files && e.target.files.length > 0) {
+                  setVideoFile(index, e.target.files[0]);
+                }
+              }}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm px-3 py-2 dark:bg-gray-700 dark:text-gray-200"
             />
+            {/* Preview for video file */}
+            <div className="mt-2">
+              {videoFilePreview ? (
+                <video
+                  src={URL.createObjectURL(videoFilePreview)}
+                  controls
+                  className="max-w-full h-auto"
+                />
+              ) : video.videoFile?.url ? (
+                <video
+                  src={video.videoFile.url}
+                  controls
+                  className="max-w-full h-auto"
+                />
+              ) : (
+                <p className="text-xs text-gray-500">No video file selected.</p>
+              )}
+            </div>
           </div>
+
+          {/* Cover file */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-              Cover Image URL
+              Cover Image
             </label>
             <input
-              type="text"
-              name={`videos[${index}].coverImage`}
-              value={video.coverImage || ''}
-              onChange={form.handleChange}
-              onBlur={form.handleBlur}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm px-3 py-2
-                         focus:border-blue-500 focus:ring focus:ring-blue-200 dark:bg-gray-700 dark:text-gray-200"
-              placeholder="https://example.com/cover.jpg"
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                if (e.target.files && e.target.files.length > 0) {
+                  setCoverFile(index, e.target.files[0]);
+                }
+              }}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm px-3 py-2 dark:bg-gray-700 dark:text-gray-200"
             />
+            {/* Preview for cover file */}
+            <div className="mt-2">
+              {coverFilePreview ? (
+                <img
+                  src={URL.createObjectURL(coverFilePreview)}
+                  alt="Cover Preview"
+                  className="max-w-full h-auto"
+                />
+              ) : (
+                <img
+                  src={video.coverImage?.url}
+                  alt="Cover Preview"
+                  className="max-w-full h-auto"
+                />
+              )}
+            </div>
           </div>
+
+          {/* Description */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
               Video Description
@@ -117,11 +162,12 @@ const SortableVideoItem = ({
               value={video.description || ''}
               onChange={form.handleChange}
               onBlur={form.handleBlur}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm px-3 py-2
-                         focus:border-blue-500 focus:ring focus:ring-blue-200 dark:bg-gray-700 dark:text-gray-200"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm px-3 py-2 dark:bg-gray-700 dark:text-gray-200"
               placeholder="Optional description"
             />
           </div>
+
+          {/* Duration + Priority */}
           <div className="mb-4 grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -133,8 +179,7 @@ const SortableVideoItem = ({
                 value={video.duration || ''}
                 onChange={form.handleChange}
                 onBlur={form.handleBlur}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm px-3 py-2
-                           focus:border-blue-500 focus:ring focus:ring-blue-200 dark:bg-gray-700 dark:text-gray-200"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm px-3 py-2 dark:bg-gray-700 dark:text-gray-200"
                 placeholder="Duration"
               />
             </div>
@@ -148,17 +193,16 @@ const SortableVideoItem = ({
                 value={video.priority || 0}
                 onChange={form.handleChange}
                 onBlur={form.handleBlur}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm px-3 py-2
-                           focus:border-blue-500 focus:ring focus:ring-blue-200 dark:bg-gray-700 dark:text-gray-200"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm px-3 py-2 dark:bg-gray-700 dark:text-gray-200"
                 placeholder="Priority"
               />
             </div>
           </div>
+
           <button
             type="button"
             onClick={() => setEditingVideoIndex(null)}
-            className="mt-2 inline-flex items-center rounded-md bg-blue-600 px-4 py-2
-                       text-sm font-medium text-white shadow hover:bg-blue-700 focus:outline-none"
+            className="mt-2 inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700"
           >
             Save
           </button>
@@ -167,15 +211,10 @@ const SortableVideoItem = ({
         // Summary view
         <div className="flex justify-between items-center">
           <div className="flex items-center">
-            {video.coverImage ? (
-              <img
-                src={video.coverImage}
-                alt="Cover"
-                className="w-16 h-16 rounded object-cover mr-3"
-              />
-            ) : (
-              <div className="w-16 h-16 bg-gray-200 rounded mr-3" />
-            )}
+            {/* Just a placeholder if no cover URL */}
+            <div className="w-16 h-16 bg-gray-200 rounded mr-3 flex items-center justify-center">
+              <FaEdit className="text-gray-400" />
+            </div>
             <div>
               <p className="font-medium text-gray-800 dark:text-gray-200">
                 {video.title || 'Untitled Video'}
@@ -198,8 +237,7 @@ const SortableVideoItem = ({
         <button
           type="button"
           onClick={() => remove(index)}
-          className="inline-flex items-center rounded-md bg-red-600 px-3 py-2
-                     text-sm font-medium text-white shadow hover:bg-red-700 focus:outline-none"
+          className="inline-flex items-center rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white shadow hover:bg-red-700"
         >
           Remove Video
         </button>
@@ -208,69 +246,290 @@ const SortableVideoItem = ({
   );
 };
 
+
+
+// const SortableVideoItem = ({
+//   video,
+//   index,
+//   form,
+//   editingVideoIndex,
+//   setEditingVideoIndex,
+//   remove,
+//   setVideoFile,
+//   setCoverFile,
+// }) => {
+//   // DnD kit
+//   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
+//     id: index,
+//   });
+//   const style = {
+//     transform: CSS.Transform.toString(transform),
+//     transition,
+//   };
+
+//   return (
+//     <div
+//       ref={setNodeRef}
+//       style={style}
+//       className="mb-6 border p-6 rounded-xl shadow-lg bg-white dark:bg-gray-800"
+//     >
+//       {/* Drag Handle */}
+//       <div {...attributes} {...listeners} className="flex items-center cursor-move mb-4">
+//         <FaGripVertical className="text-gray-500 mr-3" />
+//         <span className="font-semibold text-lg">Video {index + 1}</span>
+//       </div>
+
+//       {editingVideoIndex === index ? (
+//         // Editing view
+//         <div>
+//           {/* Title */}
+//           <div className="mb-4">
+//             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+//               Video Title
+//             </label>
+//             <input
+//               type="text"
+//               name={`videos[${index}].title`}
+//               value={video.title || ''}
+//               onChange={form.handleChange}
+//               onBlur={form.handleBlur}
+//               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm px-3 py-2 dark:bg-gray-700 dark:text-gray-200"
+//               placeholder="Enter video title"
+//             />
+//           </div>
+
+//           {/* Video file */}
+//           <div className="mb-4">
+//             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+//               Video File
+//             </label>
+//             <input
+//               type="file"
+//               accept="video/*"
+//               onChange={(e) => {
+//                 if (e.target.files && e.target.files.length > 0) {
+//                   setVideoFile(index, e.target.files[0]);
+//                 }
+//               }}
+//               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm px-3 py-2
+//                          dark:bg-gray-700 dark:text-gray-200"
+//             />
+//           </div>
+
+//           {/* Cover file */}
+//           <div className="mb-4">
+//             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+//               Cover Image
+//             </label>
+//             <input
+//               type="file"
+//               accept="image/*"
+//               onChange={(e) => {
+//                 if (e.target.files && e.target.files.length > 0) {
+//                   setCoverFile(index, e.target.files[0]);
+//                 }
+//               }}
+//               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm px-3 py-2
+//                          dark:bg-gray-700 dark:text-gray-200"
+//             />
+//           </div>
+
+//           {/* Description */}
+//           <div className="mb-4">
+//             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+//               Video Description
+//             </label>
+//             <textarea
+//               name={`videos[${index}].description`}
+//               value={video.description || ''}
+//               onChange={form.handleChange}
+//               onBlur={form.handleBlur}
+//               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm px-3 py-2 dark:bg-gray-700 dark:text-gray-200"
+//               placeholder="Optional description"
+//             />
+//           </div>
+
+//           {/* Duration + Priority */}
+//           <div className="mb-4 grid grid-cols-2 gap-4">
+//             <div>
+//               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+//                 Duration (s)
+//               </label>
+//               <input
+//                 type="number"
+//                 name={`videos[${index}].duration`}
+//                 value={video.duration || ''}
+//                 onChange={form.handleChange}
+//                 onBlur={form.handleBlur}
+//                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm px-3 py-2 dark:bg-gray-700 dark:text-gray-200"
+//                 placeholder="Duration"
+//               />
+//             </div>
+//             <div>
+//               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+//                 Priority
+//               </label>
+//               <input
+//                 type="number"
+//                 name={`videos[${index}].priority`}
+//                 value={video.priority || 0}
+//                 onChange={form.handleChange}
+//                 onBlur={form.handleBlur}
+//                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm px-3 py-2 dark:bg-gray-700 dark:text-gray-200"
+//                 placeholder="Priority"
+//               />
+//             </div>
+//           </div>
+
+//           <button
+//             type="button"
+//             onClick={() => setEditingVideoIndex(null)}
+//             className="mt-2 inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700"
+//           >
+//             Save
+//           </button>
+//         </div>
+//       ) : (
+//         // Summary view
+//         <div className="flex justify-between items-center">
+//           <div className="flex items-center">
+//             {/* Just a placeholder if no cover URL */}
+//             <div className="w-16 h-16 bg-gray-200 rounded mr-3 flex items-center justify-center">
+//               <FaEdit className="text-gray-400" />
+//             </div>
+//             <div>
+//               <p className="font-medium text-gray-800 dark:text-gray-200">
+//                 {video.title || 'Untitled Video'}
+//               </p>
+//               <p className="text-xs text-gray-600 dark:text-gray-400">
+//                 {video.duration || 0}s | P: {video.priority || 0}
+//               </p>
+//             </div>
+//           </div>
+//           <button
+//             type="button"
+//             onClick={() => setEditingVideoIndex(index)}
+//             className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+//           >
+//             Edit
+//           </button>
+//         </div>
+//       )}
+//       <div className="mt-4">
+//         <button
+//           type="button"
+//           onClick={() => remove(index)}
+//           className="inline-flex items-center rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white shadow hover:bg-red-700"
+//         >
+//           Remove Video
+//         </button>
+//       </div>
+//     </div>
+//   );
+// };
+
 // --------------------------------
 // Main Courses Component
 // --------------------------------
 const Courses = () => {
   const dispatch = useDispatch();
   const { courses, loading, error } = useSelector((state) => state.courses);
+
+  console.log('Courses:', courses);
+  
+
+  // State for controlling Modal
   const [showForm, setShowForm] = useState(false);
   const [currentCourse, setCurrentCourse] = useState(null);
   const [editingVideoIndex, setEditingVideoIndex] = useState(null);
+
+  // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const coursesPerPage = 10;
 
+  // File states
+  // We'll store them outside Formik. 
+  // For the Course:
+  const [imageFile, setImageFile] = useState(null);
+  const [shortVideoFile, setShortVideoFile] = useState(null);
+
+  // For the videos: arrays matching indexes
+  const [videoFiles, setVideoFiles] = useState([]); 
+  const [coverFiles, setCoverFiles] = useState([]);
+
+  // Set a single index's video file
+  const handleSetVideoFile = (idx, file) => {
+    const newArr = [...videoFiles];
+    newArr[idx] = file;
+    setVideoFiles(newArr);
+  };
+
+  // Set a single index's cover file
+  const handleSetCoverFile = (idx, file) => {
+    const newArr = [...coverFiles];
+    newArr[idx] = file;
+    setCoverFiles(newArr);
+  };
+
+  // On mount, fetch all courses
   useEffect(() => {
     dispatch(fetchCourses());
   }, [dispatch]);
 
+  // Determine current slice for pagination
+  const indexOfLast = currentPage * coursesPerPage;
+  const indexOfFirst = indexOfLast - coursesPerPage;
+  const currentCourses = courses.slice(indexOfFirst, indexOfLast);
+  const totalPages = Math.ceil(courses.length / coursesPerPage);
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
   // --------------------------------
-  // Formik Initial Values
+  // Formik Setup
   // --------------------------------
   const initialValues = {
-    // Original fields:
     title: currentCourse ? currentCourse.title : '',
     description: currentCourse ? currentCourse.description : '',
     instructor: currentCourse ? currentCourse.instructor : '',
     price: currentCourse ? currentCourse.price : '',
     saleEnabled: currentCourse ? currentCourse.saleEnabled : false,
-    salePrice:
-      currentCourse && currentCourse.salePrice !== undefined
-        ? currentCourse.salePrice
-        : '',
-    image: currentCourse ? currentCourse.image : '',
-    createdAt: currentCourse
-      ? new Date(currentCourse.createdAt).toISOString().substr(0, 10)
-      : '',
-    videos: currentCourse && currentCourse.videos ? currentCourse.videos : [],
+    salePrice: currentCourse?.salePrice ?? '',
     isFeatured: currentCourse ? currentCourse.isFeatured : false,
+
+    // We'll keep storing the old "image" / "shortVideoLink" as text, but we won't rely on them for uploading
+    image: currentCourse ? currentCourse.image : '', 
     shortVideoLink: currentCourse ? currentCourse.shortVideoLink : '',
 
-    // NEW FIELDS (optional or defaults):
+    // Additional fields
     difficultyLevel: currentCourse ? currentCourse.difficultyLevel : 'Beginner',
     language: currentCourse ? currentCourse.language : 'English',
-    topics:
-      currentCourse && currentCourse.topics
-        ? currentCourse.topics.join(', ')
-        : '',
+    topics: currentCourse && currentCourse.topics ? currentCourse.topics.join(', ') : '',
     totalDuration: currentCourse ? currentCourse.totalDuration : 0,
     numberOfLectures: currentCourse ? currentCourse.numberOfLectures : 0,
     category: currentCourse ? currentCourse.category : '',
-    tags:
-      currentCourse && currentCourse.tags ? currentCourse.tags.join(', ') : '',
-    requirements:
-      currentCourse && currentCourse.requirements
-        ? currentCourse.requirements.join(', ')
-        : '',
-    whatYouWillLearn:
-      currentCourse && currentCourse.whatYouWillLearn
-        ? currentCourse.whatYouWillLearn.join(', ')
-        : '',
+    tags: currentCourse && currentCourse.tags ? currentCourse.tags.join(', ') : '',
+    requirements: currentCourse && currentCourse.requirements
+      ? currentCourse.requirements.join(', ')
+      : '',
+    whatYouWillLearn: currentCourse && currentCourse.whatYouWillLearn
+      ? currentCourse.whatYouWillLearn.join(', ')
+      : '',
+
+    // Videos array
+    videos: currentCourse?.videos
+    ? currentCourse.videos.map((v) => ({
+        _id: v._id,              // <-- Include the existing video ID
+        title: v.title,
+        description: v.description,
+        duration: v.duration,
+        priority: v.priority,
+        coverImage: v.coverImage,
+        videoFile: v.videoFile,
+      }))
+    : [],
+  
   };
 
-  // --------------------------------
-  // Formik Setup
-  // --------------------------------
   const formik = useFormik({
     initialValues,
     enableReinitialize: true,
@@ -279,82 +538,217 @@ const Courses = () => {
       description: Yup.string().required('Description is required'),
       instructor: Yup.string().required('Instructor is required'),
       price: Yup.number()
-        .positive('Price must be a positive number')
+        .positive('Price must be positive')
         .required('Price is required'),
       salePrice: Yup.number().when('saleEnabled', {
         is: true,
         then: (schema) =>
           schema
-            .positive('Sale Price must be a positive number')
+            .positive('Sale Price must be positive')
             .required('Sale Price is required when sale is enabled'),
-        otherwise: (schema) => schema,
       }),
-      image: Yup.string()
-        .url('Please enter a valid URL')
-        .required('Image URL is required'),
-      shortVideoLink: Yup.string().when('isFeatured', {
-        is: true,
-        then: (schema) =>
-          schema
-            .url('Please enter a valid URL')
-            .required('Short video link is required for featured courses'),
-        otherwise: (schema) => schema,
-      }),
-      // Add other validations as needed...
+      // We won't validate "image" as a URL because we do file uploads now
     }),
-    onSubmit: async (values) => {
-      // Convert comma-separated strings back into arrays
-      const courseData = {
-        ...values,
-        topics: values.topics
-          ? values.topics.split(',').map((t) => t.trim()).filter(Boolean)
-          : [],
-        tags: values.tags
-          ? values.tags.split(',').map((t) => t.trim()).filter(Boolean)
-          : [],
-        requirements: values.requirements
-          ? values.requirements.split(',').map((r) => r.trim()).filter(Boolean)
-          : [],
-        whatYouWillLearn: values.whatYouWillLearn
-          ? values.whatYouWillLearn
-              .split(',')
-              .map((item) => item.trim())
-              .filter(Boolean)
-          : [],
-        // Sort videos by priority before sending data
-        videos: [...values.videos].sort((a, b) => a.priority - b.priority),
-      };
+//     onSubmit: async (values) => {
+//       // Convert comma-separated strings back into arrays
+//       const topicsArr = values.topics ? values.topics.split(',').map(t => t.trim()).filter(Boolean) : [];
+//       const tagsArr = values.tags ? values.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
+//       const reqArr = values.requirements ? values.requirements.split(',').map(t => t.trim()).filter(Boolean) : [];
+//       const learnArr = values.whatYouWillLearn ? values.whatYouWillLearn.split(',').map(t => t.trim()).filter(Boolean) : [];
 
-      if (currentCourse) {
-        try {
-          await dispatch(updateCourse({ id: currentCourse._id, courseData })).unwrap();
-          setShowForm(false);
-          setCurrentCourse(null);
-          setEditingVideoIndex(null);
-          formik.resetForm();
-          setCurrentPage(1);
-        } catch (err) {
-          console.error('Update course error:', err);
-        }
-      } else {
-        try {
-          await dispatch(addCourse(courseData)).unwrap();
-          setShowForm(false);
-          setEditingVideoIndex(null);
-          formik.resetForm();
-          setCurrentPage(1);
-        } catch (err) {
-          console.error('Add course error:', err);
-        }
+//       // Sort videos by priority
+//       const sortedVideos = [...values.videos].sort((a, b) => a.priority - b.priority);
+
+//       // Build FormData
+//       const formData = new FormData();
+
+//       // Text fields:
+//       formData.append('title', values.title);
+//       formData.append('description', values.description);
+//       formData.append('instructor', values.instructor);
+//       formData.append('price', values.price);
+//       formData.append('saleEnabled', values.saleEnabled);
+//       formData.append('salePrice', values.salePrice);
+//       formData.append('isFeatured', values.isFeatured);
+//       formData.append('difficultyLevel', values.difficultyLevel);
+//       formData.append('language', values.language);
+//       formData.append('topics', topicsArr.join(','));
+//       formData.append('totalDuration', values.totalDuration);
+//       formData.append('numberOfLectures', values.numberOfLectures);
+//       formData.append('category', values.category);
+//       formData.append('tags', tagsArr.join(','));
+//       formData.append('requirements', reqArr.join(','));
+//       formData.append('whatYouWillLearn', learnArr.join(','));
+
+//       // If user picked a new imageFile
+//       if (imageFile) {
+//         formData.append('image', imageFile);
+//       }
+
+//       // If featured and user picked a shortVideoFile
+//       if (values.isFeatured && shortVideoFile) {
+//         formData.append('shortVideo', shortVideoFile);
+//       }
+
+//       // We'll convert the textual parts of videos into an array "videosData"
+//       // Then the actual files will go in "videos[]" / "covers[]" by index
+// // We'll convert the textual parts of videos into an array "videosData"
+// const videosDataArr = sortedVideos.map((vid, i) => {
+//   // If user selected a video file for index i
+//   // if (videoFiles[i]) {
+//   //   formData.append('videos', videoFiles[i]);
+//   // } else {
+//   //   formData.append('videos', ''); 
+//   // }
+
+//   // // If user selected a cover file
+//   // if (coverFiles[i]) {
+//   //   formData.append('covers', coverFiles[i]);
+//   // } else {
+//   //   formData.append('covers', '');
+//   // }
+//   if (!vid._id && videoFiles[i]) formData.append('videos', videoFiles[i]);
+// if (!vid._id && coverFiles[i]) formData.append('covers', coverFiles[i]);
+
+
+//   return {
+//     _id: vid._id || '',            // <-- Keep the ID if it exists; blank if new
+//     title: vid.title || '',
+//     description: vid.description || '',
+//     duration: vid.duration || 0,
+//     priority: vid.priority || 0,
+//   };
+// });
+
+
+//       // Convert to JSON
+//       formData.append('videosData', JSON.stringify(videosDataArr));
+
+//       try {
+//         if (currentCourse) {
+//           // Update
+//           await dispatch(
+//             updateCourse({ id: currentCourse._id, courseData: formData })
+//           ).unwrap();
+//         } else {
+//           // Add
+//           await dispatch(addCourse(formData)).unwrap();
+//         }
+
+//         // Cleanup
+//         setShowForm(false);
+//         setCurrentCourse(null);
+//         setEditingVideoIndex(null);
+//         formik.resetForm();
+//         setCurrentPage(1);
+
+//         // Clear file states
+//         setImageFile(null);
+//         setShortVideoFile(null);
+//         setVideoFiles([]);
+//         setCoverFiles([]);
+//       } catch (err) {
+//         console.error('Submit course error:', err);
+//       }
+//     },
+onSubmit: async (values) => {
+  try {
+    // 1) Convert comma-separated strings => arrays
+    const topicsArr = values.topics ? values.topics.split(',').map(t => t.trim()).filter(Boolean) : [];
+    const tagsArr = values.tags ? values.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
+    const reqArr = values.requirements ? values.requirements.split(',').map(t => t.trim()).filter(Boolean) : [];
+    const learnArr = values.whatYouWillLearn ? values.whatYouWillLearn.split(',').map(t => t.trim()).filter(Boolean) : [];
+
+    // 2) Sort videos by priority
+    const sortedVideos = [...values.videos].sort((a, b) => a.priority - b.priority);
+
+    // 3) Create FormData for all textual fields
+    const formData = new FormData();
+    formData.append('title', values.title);
+    formData.append('description', values.description);
+    formData.append('instructor', values.instructor);
+    formData.append('price', values.price);
+    formData.append('saleEnabled', values.saleEnabled);
+    formData.append('salePrice', values.salePrice);
+    formData.append('isFeatured', values.isFeatured);
+    formData.append('difficultyLevel', values.difficultyLevel);
+    formData.append('language', values.language);
+    formData.append('topics', topicsArr.join(','));
+    formData.append('totalDuration', values.totalDuration);
+    formData.append('numberOfLectures', values.numberOfLectures);
+    formData.append('category', values.category);
+    formData.append('tags', tagsArr.join(','));
+    formData.append('requirements', reqArr.join(','));
+    formData.append('whatYouWillLearn', learnArr.join(','));
+
+    // 4) If user picked a new main image or shortVideo
+    if (imageFile) formData.append('image', imageFile);
+    if (values.isFeatured && shortVideoFile) {
+      formData.append('shortVideo', shortVideoFile);
+    }
+
+    // 5) For each video, we give unique field names:
+    //    "videoFile_<id>" or "coverFile_<id>" to avoid index confusion.
+    const videosDataArr = [];
+    for (let i = 0; i < sortedVideos.length; i++) {
+      const vid = sortedVideos[i];
+      const uniqueId = vid._id || `new_${i}`; // For a new item, use "new_0" etc.
+
+      // If there's a new video file in "videoFiles[i]"
+      if (videoFiles[i]) {
+        formData.append(`videoFile_${uniqueId}`, videoFiles[i]);
       }
-    },
+      // If there's a new cover file in "coverFiles[i]"
+      if (coverFiles[i]) {
+        formData.append(`coverFile_${uniqueId}`, coverFiles[i]);
+      }
+
+      // Build textual info for this video
+      videosDataArr.push({
+        _id: vid._id || '', // blank if new
+        title: vid.title || '',
+        description: vid.description || '',
+        duration: vid.duration || 0,
+        priority: vid.priority || 0,
+      });
+    }
+
+    // 6) Attach the final JSON for all videos
+    formData.append('videosData', JSON.stringify(videosDataArr));
+
+    // 7) Dispatch add or update
+    if (currentCourse) {
+      await dispatch(updateCourse({ id: currentCourse._id, courseData: formData })).unwrap();
+    } else {
+      await dispatch(addCourse(formData)).unwrap();
+    }
+
+    // 8) Cleanup
+    setShowForm(false);
+    setCurrentCourse(null);
+    setEditingVideoIndex(null);
+    formik.resetForm();
+    setCurrentPage(1);
+    setImageFile(null);
+    setShortVideoFile(null);
+    setVideoFiles([]);
+    setCoverFiles([]);
+
+  } catch (err) {
+    console.error('Submit course error:', err);
+  }
+}
+
   });
 
-  // --------------------------------
   // Handlers
-  // --------------------------------
   const handleEdit = (course) => {
     setCurrentCourse(course);
+    // Clear file states so we don't inadvertently re-upload old files
+    setImageFile(null);
+    setShortVideoFile(null);
+    setVideoFiles([]);
+    setCoverFiles([]);
     setShowForm(true);
     setEditingVideoIndex(null);
   };
@@ -374,14 +768,10 @@ const Courses = () => {
       }
     }
   };
-
-  // Pagination
-  const indexOfLast = currentPage * coursesPerPage;
-  const indexOfFirst = indexOfLast - coursesPerPage;
-  const currentCourses = courses.slice(indexOfFirst, indexOfLast);
-  const totalPages = Math.ceil(courses.length / coursesPerPage);
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
-
+  useEffect(() => {
+    console.log('Current course image URL:', formik.values.image?.url);
+  }, [formik.values.image]);
+  
   // Drag + drop reordering for videos
   const handleDragEnd = (event, form) => {
     const { active, over } = event;
@@ -396,12 +786,15 @@ const Courses = () => {
         priority: idx,
       }));
       form.setFieldValue('videos', newVideos);
+
+      // Also reorder the corresponding file arrays (videoFiles, coverFiles)
+      const newVideoFiles = arrayMove(videoFiles, oldIndex, newIndex);
+      const newCoverFiles = arrayMove(coverFiles, oldIndex, newIndex);
+      setVideoFiles(newVideoFiles);
+      setCoverFiles(newCoverFiles);
     }
   };
 
-  // --------------------------------
-  // Render
-  // --------------------------------
   return (
     <div className="p-8 bg-gray-100 dark:bg-gray-900 min-h-screen">
       <h2 className="text-4xl font-bold mb-8 text-gray-800 dark:text-white">
@@ -417,9 +810,12 @@ const Courses = () => {
           setCurrentCourse(null);
           setEditingVideoIndex(null);
           formik.resetForm();
+          setImageFile(null);
+          setShortVideoFile(null);
+          setVideoFiles([]);
+          setCoverFiles([]);
         }}
-        className="bg-blue-600 text-white px-6 py-3 rounded-lg shadow
-                   hover:bg-blue-700 transition mb-8 inline-flex items-center"
+        className="bg-blue-600 text-white px-6 py-3 rounded-lg shadow hover:bg-blue-700 transition mb-8 inline-flex items-center"
         aria-label="Add Course"
       >
         <FaPlus className="mr-3" /> Add Course
@@ -461,9 +857,9 @@ const Courses = () => {
                     className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                   >
                     <td className="py-4 px-6">
-                      {course.image ? (
+                      {course.image?.url ? (
                         <img
-                          src={course.image}
+                          src={course.image.url}
                           alt={course.title}
                           className="w-16 h-16 rounded object-cover"
                         />
@@ -478,7 +874,7 @@ const Courses = () => {
                       {course.instructor}
                     </td>
                     <td className="py-4 px-6 text-sm text-gray-800 dark:text-gray-200">
-                      ${course.price.toFixed(2)}
+                      ${course.price?.toFixed(2)}
                     </td>
                     <td className="py-4 px-6 text-sm text-gray-800 dark:text-gray-200">
                       {new Date(course.createdAt).toLocaleDateString()}
@@ -573,6 +969,10 @@ const Courses = () => {
             setCurrentCourse(null);
             setEditingVideoIndex(null);
             formik.resetForm();
+            setImageFile(null);
+            setShortVideoFile(null);
+            setVideoFiles([]);
+            setCoverFiles([]);
           }}
         >
           <div className="min-h-screen px-4 text-center bg-black bg-opacity-50">
@@ -602,6 +1002,10 @@ const Courses = () => {
                       setCurrentCourse(null);
                       setEditingVideoIndex(null);
                       formik.resetForm();
+                      setImageFile(null);
+                      setShortVideoFile(null);
+                      setVideoFiles([]);
+                      setCoverFiles([]);
                     }}
                     className="text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100 text-3xl leading-none"
                   >
@@ -623,12 +1027,11 @@ const Courses = () => {
                           <input
                             type="text"
                             name="title"
-                            className={`mt-2 block w-full rounded-md border-gray-300 shadow-sm px-4 py-3
-                                        focus:border-blue-500 focus:ring focus:ring-blue-200 dark:bg-gray-700 dark:text-gray-200 ${
-                                          formik.touched.title && formik.errors.title
-                                            ? 'border-red-500'
-                                            : ''
-                                        }`}
+                            className={`mt-2 block w-full rounded-md border-gray-300 shadow-sm px-4 py-3 dark:bg-gray-700 dark:text-gray-200 ${
+                              formik.touched.title && formik.errors.title
+                                ? 'border-red-500'
+                                : ''
+                            }`}
                             value={formik.values.title}
                             onChange={formik.handleChange}
                             onBlur={formik.handleBlur}
@@ -646,19 +1049,20 @@ const Courses = () => {
                           </label>
                           <textarea
                             name="description"
-                            className={`mt-2 block w-full rounded-md border-gray-300 shadow-sm px-4 py-3
-                                        focus:border-blue-500 focus:ring focus:ring-blue-200 dark:bg-gray-700 dark:text-gray-200 ${
-                                          formik.touched.description && formik.errors.description
-                                            ? 'border-red-500'
-                                            : ''
-                                        }`}
+                            className={`mt-2 block w-full rounded-md border-gray-300 shadow-sm px-4 py-3 dark:bg-gray-700 dark:text-gray-200 ${
+                              formik.touched.description && formik.errors.description
+                                ? 'border-red-500'
+                                : ''
+                            }`}
                             value={formik.values.description}
                             onChange={formik.handleChange}
                             onBlur={formik.handleBlur}
                             placeholder="Course Description"
                           />
                           {formik.touched.description && formik.errors.description && (
-                            <div className="text-red-500 text-xs mt-1">{formik.errors.description}</div>
+                            <div className="text-red-500 text-xs mt-1">
+                              {formik.errors.description}
+                            </div>
                           )}
                         </div>
 
@@ -670,19 +1074,20 @@ const Courses = () => {
                           <input
                             type="text"
                             name="instructor"
-                            className={`mt-2 block w-full rounded-md border-gray-300 shadow-sm px-4 py-3
-                                        focus:border-blue-500 focus:ring focus:ring-blue-200 dark:bg-gray-700 dark:text-gray-200 ${
-                                          formik.touched.instructor && formik.errors.instructor
-                                            ? 'border-red-500'
-                                            : ''
-                                        }`}
+                            className={`mt-2 block w-full rounded-md border-gray-300 shadow-sm px-4 py-3 dark:bg-gray-700 dark:text-gray-200 ${
+                              formik.touched.instructor && formik.errors.instructor
+                                ? 'border-red-500'
+                                : ''
+                            }`}
                             value={formik.values.instructor}
                             onChange={formik.handleChange}
                             onBlur={formik.handleBlur}
                             placeholder="Instructor Name"
                           />
                           {formik.touched.instructor && formik.errors.instructor && (
-                            <div className="text-red-500 text-xs mt-1">{formik.errors.instructor}</div>
+                            <div className="text-red-500 text-xs mt-1">
+                              {formik.errors.instructor}
+                            </div>
                           )}
                         </div>
 
@@ -694,12 +1099,11 @@ const Courses = () => {
                           <input
                             type="number"
                             name="price"
-                            className={`mt-2 block w-full rounded-md border-gray-300 shadow-sm px-4 py-3
-                                        focus:border-blue-500 focus:ring focus:ring-blue-200 dark:bg-gray-700 dark:text-gray-200 ${
-                                          formik.touched.price && formik.errors.price
-                                            ? 'border-red-500'
-                                            : ''
-                                        }`}
+                            className={`mt-2 block w-full rounded-md border-gray-300 shadow-sm px-4 py-3 dark:bg-gray-700 dark:text-gray-200 ${
+                              formik.touched.price && formik.errors.price
+                                ? 'border-red-500'
+                                : ''
+                            }`}
                             value={formik.values.price}
                             onChange={formik.handleChange}
                             onBlur={formik.handleBlur}
@@ -719,14 +1123,17 @@ const Courses = () => {
                             id="saleEnabled"
                             checked={formik.values.saleEnabled}
                             onChange={formik.handleChange}
-                            className="mr-2 h-5 w-5 text-blue-600 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
+                            className="mr-2 h-5 w-5 text-blue-600 dark:bg-gray-700 dark:border-gray-600"
                           />
-                          <label htmlFor="saleEnabled" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          <label
+                            htmlFor="saleEnabled"
+                            className="text-sm font-medium text-gray-700 dark:text-gray-300"
+                          >
                             Sale Enabled
                           </label>
                         </div>
 
-                        {/* Conditionally Rendered Sale Price Field */}
+                        {/* Sale Price */}
                         {formik.values.saleEnabled && (
                           <div className="mb-6">
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -740,76 +1147,112 @@ const Courses = () => {
                               onBlur={formik.handleBlur}
                               placeholder="Sale Price"
                               step="0.01"
-                              className={`mt-2 block w-full rounded-md border-gray-300 shadow-sm px-4 py-3
-                                focus:border-blue-500 focus:ring focus:ring-blue-200 dark:bg-gray-700 dark:text-gray-200 ${
-                                  formik.touched.salePrice && formik.errors.salePrice ? 'border-red-500' : ''
-                                }`}
+                              className={`mt-2 block w-full rounded-md border-gray-300 shadow-sm px-4 py-3 dark:bg-gray-700 dark:text-gray-200 ${
+                                formik.touched.salePrice && formik.errors.salePrice
+                                  ? 'border-red-500'
+                                  : ''
+                              }`}
                             />
                             {formik.touched.salePrice && formik.errors.salePrice && (
-                              <div className="text-red-500 text-xs mt-1">{formik.errors.salePrice}</div>
+                              <div className="text-red-500 text-xs mt-1">
+                                {formik.errors.salePrice}
+                              </div>
                             )}
                           </div>
                         )}
 
-                        {/* Image URL */}
+                        {/* Course Image File */}
                         <div className="mb-6">
                           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Image URL
+                            Course Image
                           </label>
                           <input
-                            type="text"
-                            name="image"
-                            className={`mt-2 block w-full rounded-md border-gray-300 shadow-sm px-4 py-3
-                                        focus:border-blue-500 focus:ring focus:ring-blue-200 dark:bg-gray-700 dark:text-gray-200 ${
-                                          formik.touched.image && formik.errors.image
-                                            ? 'border-red-500'
-                                            : ''
-                                        }`}
-                            value={formik.values.image}
-                            onChange={formik.handleChange}
-                            onBlur={formik.handleBlur}
-                            placeholder="https://example.com/image.jpg"
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => {
+                              if (e.target.files && e.target.files.length > 0) {
+                                setImageFile(e.target.files[0]);
+                              } else {
+                                setImageFile(null);
+                              }
+                            }}
+                            className="mt-2 block w-full rounded-md border-gray-300 shadow-sm px-4 py-3 dark:bg-gray-700 dark:text-gray-200"
                           />
+                          {imageFile ? (
+                            <div className="mt-2">
+                              <img
+                                src={URL.createObjectURL(imageFile)}
+                                alt="Course Image"
+                                className="max-w-full h-auto"
+                              />
+                            </div>
+                          ) : (
+                            <div className="mt-2">
+                              <img
+                                src={formik.values.image?.url}
+                                alt="Course Image"
+                                className="max-w-full h-auto"
+                              />
+                            </div>
+                          )}
                           {formik.touched.image && formik.errors.image && (
                             <div className="text-red-500 text-xs mt-1">{formik.errors.image}</div>
                           )}
                         </div>
 
-                        {/* isFeatured + shortVideoLink */}
+                        {/* isFeatured + shortVideoFile */}
                         <div className="mb-8 flex items-center">
                           <input
                             type="checkbox"
                             name="isFeatured"
                             id="isFeatured"
-                            className="mr-3 h-5 w-5 text-blue-600 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
+                            className="mr-3 h-5 w-5 text-blue-600 dark:bg-gray-700 dark:border-gray-600"
                             checked={formik.values.isFeatured}
                             onChange={formik.handleChange}
                           />
-                          <label htmlFor="isFeatured" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          <label
+                            htmlFor="isFeatured"
+                            className="text-sm font-medium text-gray-700 dark:text-gray-300"
+                          >
                             Featured Course
                           </label>
                         </div>
                         {formik.values.isFeatured && (
                           <div className="mb-6">
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                              Short Video Link
+                              Short Video (optional)
                             </label>
                             <input
-                              type="text"
-                              name="shortVideoLink"
-                              className={`mt-2 block w-full rounded-md border-gray-300 shadow-sm px-4 py-3
-                                          focus:border-blue-500 focus:ring focus:ring-blue-200 dark:bg-gray-700 dark:text-gray-200 ${
-                                            formik.touched.shortVideoLink && formik.errors.shortVideoLink
-                                              ? 'border-red-500'
-                                              : ''
-                                          }`}
-                              value={formik.values.shortVideoLink}
-                              onChange={formik.handleChange}
-                              onBlur={formik.handleBlur}
-                              placeholder="https://example.com/shortvideo.mp4"
+                              type="file"
+                              accept="video/*"
+                              onChange={(e) => {
+                                if (e.target.files && e.target.files.length > 0) {
+                                  setShortVideoFile(e.target.files[0]);
+                                } else {
+                                  setShortVideoFile(null);
+                                }
+                              }}
+                              className="mt-2 block w-full rounded-md border-gray-300 shadow-sm px-4 py-3 dark:bg-gray-700 dark:text-gray-200"
                             />
-                            {formik.touched.shortVideoLink && formik.errors.shortVideoLink && (
-                              <div className="text-red-500 text-xs mt-1">{formik.errors.shortVideoLink}</div>
+                            {shortVideoFile ? (
+                              <div className="mt-2">
+                                <video
+                                  src={URL.createObjectURL(shortVideoFile)}
+                                  controls
+                                  className="max-w-full h-auto"
+                                />
+                              </div>
+                            ) : (
+                              <div className="mt-2">
+                                <video
+                                  src={formik.values.shortVideoLink?.url}
+                                  controls
+                                  className="max-w-full h-auto"
+                                />
+                              </div>
+                            )}
+                            {formik.touched.shortVideo && formik.errors.shortVideo && (
+                              <div className="text-red-500 text-xs mt-1">{formik.errors.shortVideo}</div>
                             )}
                           </div>
                         )}
@@ -824,7 +1267,7 @@ const Courses = () => {
                             value={formik.values.difficultyLevel}
                             onChange={formik.handleChange}
                             onBlur={formik.handleBlur}
-                            className="mt-2 block w-full rounded-md border-gray-300 shadow-sm px-4 py-3 focus:border-blue-500 focus:ring focus:ring-blue-200 dark:bg-gray-700 dark:text-gray-200"
+                            className="mt-2 block w-full rounded-md border-gray-300 shadow-sm px-4 py-3 dark:bg-gray-700 dark:text-gray-200"
                           >
                             <option value="Beginner">Beginner</option>
                             <option value="Intermediate">Intermediate</option>
@@ -842,7 +1285,7 @@ const Courses = () => {
                             value={formik.values.language}
                             onChange={formik.handleChange}
                             onBlur={formik.handleBlur}
-                            className="mt-2 block w-full rounded-md border-gray-300 shadow-sm px-4 py-3 focus:border-blue-500 focus:ring focus:ring-blue-200 dark:bg-gray-700 dark:text-gray-200"
+                            className="mt-2 block w-full rounded-md border-gray-300 shadow-sm px-4 py-3 dark:bg-gray-700 dark:text-gray-200"
                           />
                         </div>
 
@@ -856,7 +1299,7 @@ const Courses = () => {
                             value={formik.values.category}
                             onChange={formik.handleChange}
                             onBlur={formik.handleBlur}
-                            className="mt-2 block w-full rounded-md border-gray-300 shadow-sm px-4 py-3 focus:border-blue-500 focus:ring focus:ring-blue-200 dark:bg-gray-700 dark:text-gray-200"
+                            className="mt-2 block w-full rounded-md border-gray-300 shadow-sm px-4 py-3 dark:bg-gray-700 dark:text-gray-200"
                             placeholder="Ex: AI, Data Science"
                           />
                         </div>
@@ -872,7 +1315,7 @@ const Courses = () => {
                               value={formik.values.totalDuration}
                               onChange={formik.handleChange}
                               onBlur={formik.handleBlur}
-                              className="mt-2 block w-full rounded-md border-gray-300 shadow-sm px-4 py-3 focus:border-blue-500 focus:ring focus:ring-blue-200 dark:bg-gray-700 dark:text-gray-200"
+                              className="mt-2 block w-full rounded-md border-gray-300 shadow-sm px-4 py-3 dark:bg-gray-700 dark:text-gray-200"
                             />
                           </div>
                           <div>
@@ -885,7 +1328,7 @@ const Courses = () => {
                               value={formik.values.numberOfLectures}
                               onChange={formik.handleChange}
                               onBlur={formik.handleBlur}
-                              className="mt-2 block w-full rounded-md border-gray-300 shadow-sm px-4 py-3 focus:border-blue-500 focus:ring focus:ring-blue-200 dark:bg-gray-700 dark:text-gray-200"
+                              className="mt-2 block w-full rounded-md border-gray-300 shadow-sm px-4 py-3 dark:bg-gray-700 dark:text-gray-200"
                             />
                           </div>
                         </div>
@@ -900,7 +1343,7 @@ const Courses = () => {
                             value={formik.values.topics}
                             onChange={formik.handleChange}
                             onBlur={formik.handleBlur}
-                            className="mt-2 block w-full rounded-md border-gray-300 shadow-sm px-4 py-3 focus:border-blue-500 focus:ring focus:ring-blue-200 dark:bg-gray-700 dark:text-gray-200"
+                            className="mt-2 block w-full rounded-md border-gray-300 shadow-sm px-4 py-3 dark:bg-gray-700 dark:text-gray-200"
                             placeholder="AI, Machine Learning, etc."
                           />
                         </div>
@@ -915,7 +1358,7 @@ const Courses = () => {
                             value={formik.values.tags}
                             onChange={formik.handleChange}
                             onBlur={formik.handleBlur}
-                            className="mt-2 block w-full rounded-md border-gray-300 shadow-sm px-4 py-3 focus:border-blue-500 focus:ring focus:ring-blue-200 dark:bg-gray-700 dark:text-gray-200"
+                            className="mt-2 block w-full rounded-md border-gray-300 shadow-sm px-4 py-3 dark:bg-gray-700 dark:text-gray-200"
                             placeholder="python, ml, beginner, etc."
                           />
                         </div>
@@ -930,7 +1373,7 @@ const Courses = () => {
                             value={formik.values.requirements}
                             onChange={formik.handleChange}
                             onBlur={formik.handleBlur}
-                            className="mt-2 block w-full rounded-md border-gray-300 shadow-sm px-4 py-3 focus:border-blue-500 focus:ring focus:ring-blue-200 dark:bg-gray-700 dark:text-gray-200"
+                            className="mt-2 block w-full rounded-md border-gray-300 shadow-sm px-4 py-3 dark:bg-gray-700 dark:text-gray-200"
                             placeholder="Basic Python knowledge, etc."
                           />
                         </div>
@@ -945,7 +1388,7 @@ const Courses = () => {
                             value={formik.values.whatYouWillLearn}
                             onChange={formik.handleChange}
                             onBlur={formik.handleBlur}
-                            className="mt-2 block w-full rounded-md border-gray-300 shadow-sm px-4 py-3 focus:border-blue-500 focus:ring focus:ring-blue-200 dark:bg-gray-700 dark:text-gray-200"
+                            className="mt-2 block w-full rounded-md border-gray-300 shadow-sm px-4 py-3 dark:bg-gray-700 dark:text-gray-200"
                             placeholder="Build ML models, Fine-tune GPT, etc."
                           />
                         </div>
@@ -959,7 +1402,7 @@ const Courses = () => {
                         <FieldArray name="videos">
                           {({ push, remove, form }) => (
                             <>
-                              <SimpleBar style={{ maxHeight: 450 }} className="pr-2">
+                              <SimpleBar  className="pr-2">
                                 <DndContext
                                   collisionDetection={closestCenter}
                                   onDragEnd={(event) => handleDragEnd(event, form)}
@@ -970,6 +1413,17 @@ const Courses = () => {
                                   >
                                     {form.values.videos && form.values.videos.length > 0 ? (
                                       form.values.videos.map((video, index) => (
+                                        // <SortableVideoItem
+                                        //   key={index}
+                                        //   video={video}
+                                        //   index={index}
+                                        //   form={form}
+                                        //   editingVideoIndex={editingVideoIndex}
+                                        //   setEditingVideoIndex={setEditingVideoIndex}
+                                        //   remove={remove}
+                                        //   setVideoFile={handleSetVideoFile}
+                                        //   setCoverFile={handleSetCoverFile}
+                                        // />
                                         <SortableVideoItem
                                           key={index}
                                           video={video}
@@ -978,7 +1432,12 @@ const Courses = () => {
                                           editingVideoIndex={editingVideoIndex}
                                           setEditingVideoIndex={setEditingVideoIndex}
                                           remove={remove}
+                                          setVideoFile={handleSetVideoFile}
+                                          setCoverFile={handleSetCoverFile}
+                                          videoFilePreview={videoFiles[index]} // pass the preview file if exists
+                                          coverFilePreview={coverFiles[index]}   // pass the preview file if exists
                                         />
+
                                       ))
                                     ) : (
                                       <div className="text-sm text-gray-500 dark:text-gray-400">
@@ -995,15 +1454,14 @@ const Courses = () => {
                                 onClick={() =>
                                   push({
                                     title: '',
-                                    url: '',
-                                    coverImage: '',
                                     description: '',
                                     duration: 0,
                                     priority: form.values.videos.length,
                                   })
                                 }
-                                className="mt-4 inline-flex items-center rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-green-700 focus:outline-none"
+                                className="mt-4 inline-flex items-center rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-green-700"
                               >
+                                <FaPlus className="mr-2" />
                                 Add Video
                               </button>
                             </>
@@ -1011,6 +1469,9 @@ const Courses = () => {
                         </FieldArray>
                       </div>
                     </div>
+
+           
+
 
                     {/* Footer Buttons */}
                     <div className="flex justify-end space-x-4 mt-8">
