@@ -43,7 +43,7 @@ const SelectApp = () => {
 
         {/* App 3 Card */}
         <div 
-          onClick={() => navigate("/app3")} 
+          onClick={() => navigate("/learn2trade")} 
           className="cursor-pointer bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition-transform transform hover:-translate-y-2 text-center w-56"
         >
           <img 

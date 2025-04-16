@@ -58,7 +58,7 @@ const App = () => {
           }
         />
         <Route
-          path="/app3/*"
+          path="/learn2trade/*"
           element={
             isAuthenticated ? <App3Routes /> : <Navigate to="/login" replace />
           }

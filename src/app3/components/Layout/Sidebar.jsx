@@ -30,15 +30,15 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
   }, []);
 
   const menuItems = [
-    { name: "Dashboard", icon: <FaHome className="h-6 w-6" />, path: "/app3" },
-    { name: "Users", icon: <FaUsers className="h-6 w-6" />, path: "/app3/users" },
-    { name: "Products", icon: <FaBoxOpen className="h-6 w-6" />, path: "/app3/products" },
-    { name: "Orders", icon: <FaClipboardList className="h-6 w-6" />, path: "/app3/orders" },
-    { name: "Reviews", icon: <FaStar className="h-6 w-6" />, path: "/app3/reviews" },
-    { name: "Courses", icon: <FaBook className="h-6 w-6" />, path: "/app3/courses" },
-    { name: "Ads", icon: <FaBullhorn className="h-6 w-6" />, path: "/app3/ads" },
-    { name: "Enrollments", icon: <FaClipboardList className="h-6 w-6" />, path: "/app3/enrollments" },
-    { name: "Policies", icon: <FaFileContract className="h-6 w-6" />, path: "/app3/policies" },
+    { name: "Dashboard", icon: <FaHome className="h-6 w-6" />, path: "/learn2trade" },
+    { name: "Users", icon: <FaUsers className="h-6 w-6" />, path: "/learn2trade/users" },
+    { name: "Products", icon: <FaBoxOpen className="h-6 w-6" />, path: "/learn2trade/products" },
+    { name: "Orders", icon: <FaClipboardList className="h-6 w-6" />, path: "/learn2trade/orders" },
+    { name: "Reviews", icon: <FaStar className="h-6 w-6" />, path: "/learn2trade/reviews" },
+    { name: "Courses", icon: <FaBook className="h-6 w-6" />, path: "/learn2trade/courses" },
+    { name: "Ads", icon: <FaBullhorn className="h-6 w-6" />, path: "/learn2trade/ads" },
+    { name: "Enrollments", icon: <FaClipboardList className="h-6 w-6" />, path: "/learn2trade/enrollments" },
+    { name: "Policies", icon: <FaFileContract className="h-6 w-6" />, path: "/learn2trade/policies" },
   ];
 
   return (

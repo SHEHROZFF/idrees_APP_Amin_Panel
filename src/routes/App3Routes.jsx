@@ -35,7 +35,7 @@ const App3Routes = () => {
         <Route path="policies" element={<Policies />} />
       </Route>
 
-      <Route path="*" element={<Navigate to="/app3" replace />} />
+      <Route path="*" element={<Navigate to="/learn2trade" replace />} />
     </Routes>
   );
 };
