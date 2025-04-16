@@ -7,7 +7,7 @@ import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { Navigate, Link, useNavigate } from 'react-router-dom';
 import { FaEye, FaEyeSlash } from 'react-icons/fa'; // Icons for password toggle
-import logo from '../../app2/assets/logo.jpg'; // Importing the logo image
+// import logo from '../../app2/assets/logo.jpg'; // Importing the logo image
 
 const Register = () => {
   const dispatch = useDispatch();
@@ -74,9 +74,10 @@ const Register = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 px-4">
       <div className="bg-white dark:bg-gray-800 p-10 rounded-lg shadow-lg w-full max-w-md relative">
         {/* Logo */}
-        <div className="flex justify-center mb-6">
-          <img src={logo} alt="Admin Panel Logo" className="h-16 w-16 object-contain" />
-        </div>
+        
+          {/* <div className="flex justify-center mb-6">
+            <img src={logo} alt="Admin Panel Logo" className="h-16 w-16 object-contain" />
+          </div>  */}
 
         {/* Close Button */}
         <button

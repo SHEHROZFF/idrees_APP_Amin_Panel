@@ -6,7 +6,7 @@ import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { Navigate, Link } from 'react-router-dom';
 import { FaEye, FaEyeSlash } from 'react-icons/fa'; // Icons for password toggle
-import logo from '../../app2/assets/logo.jpg'; // Importing the logo image
+// import logo from '../../app2/assets/logo.jpg'; // Importing the logo image
 
 const Login = () => {
   const dispatch = useDispatch();

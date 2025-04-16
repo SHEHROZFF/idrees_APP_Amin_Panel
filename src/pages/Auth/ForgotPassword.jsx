@@ -6,7 +6,7 @@ import { forgotPassword, clearAuthMessages } from '../../redux/slices/authSlice'
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { Link, useNavigate } from 'react-router-dom';
-import logo from '../../app2/assets/logo.jpg';
+// import logo from '../../app2/assets/logo.jpg';
 
 const ForgotPassword = () => {
   const dispatch = useDispatch();

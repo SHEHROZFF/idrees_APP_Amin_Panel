@@ -33,7 +33,7 @@ const App2Routes = () => {
         <Route path="policies" element={<Policies />} />
       </Route>
 
-      <Route path="*" element={<Navigate to="/app2" replace />} />
+      <Route path="*" element={<Navigate to="/ai-nsider" replace />} />
     </Routes>
   );
 };

@@ -30,15 +30,15 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
   }, []);
 
   const menuItems = [
-    { name: "Dashboard", icon: <FaHome className="h-6 w-6" />, path: "/app2" },
-    { name: "Users", icon: <FaUsers className="h-6 w-6" />, path: "/app2/users" },
-    { name: "Products", icon: <FaBoxOpen className="h-6 w-6" />, path: "/app2/products" },
-    { name: "Orders", icon: <FaClipboardList className="h-6 w-6" />, path: "/app2/orders" },
-    { name: "Reviews", icon: <FaStar className="h-6 w-6" />, path: "/app2/reviews" },
-    { name: "Courses", icon: <FaBook className="h-6 w-6" />, path: "/app2/courses" },
-    { name: "Ads", icon: <FaBullhorn className="h-6 w-6" />, path: "/app2/ads" },
-    { name: "Enrollments", icon: <FaClipboardList className="h-6 w-6" />, path: "/app2/enrollments" },
-    { name: "Policies", icon: <FaFileContract className="h-6 w-6" />, path: "/app2/policies" },
+    { name: "Dashboard", icon: <FaHome className="h-6 w-6" />, path: "/ai-nsider" },
+    { name: "Users", icon: <FaUsers className="h-6 w-6" />, path: "/ai-nsider/users" },
+    { name: "Products", icon: <FaBoxOpen className="h-6 w-6" />, path: "/ai-nsider/products" },
+    { name: "Orders", icon: <FaClipboardList className="h-6 w-6" />, path: "/ai-nsider/orders" },
+    { name: "Reviews", icon: <FaStar className="h-6 w-6" />, path: "/ai-nsider/reviews" },
+    { name: "Courses", icon: <FaBook className="h-6 w-6" />, path: "/ai-nsider/courses" },
+    { name: "Ads", icon: <FaBullhorn className="h-6 w-6" />, path: "/ai-nsider/ads" },
+    { name: "Enrollments", icon: <FaClipboardList className="h-6 w-6" />, path: "/ai-nsider/enrollments" },
+    { name: "Policies", icon: <FaFileContract className="h-6 w-6" />, path: "/ai-nsider/policies" },
   ];
 
   return (

@@ -52,7 +52,7 @@ const App = () => {
           }
         />
         <Route
-          path="/app2/*"
+          path="/ai-nsider/*"
           element={
             isAuthenticated ? <App2Routes /> : <Navigate to="/login" replace />
           }

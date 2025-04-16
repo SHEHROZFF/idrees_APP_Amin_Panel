@@ -7,7 +7,7 @@ import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
-import logo from '../../app2/assets/logo.jpg';
+// import logo from '../../app2/assets/logo.jpg';
 
 const ResetPassword = () => {
   const dispatch = useDispatch();
